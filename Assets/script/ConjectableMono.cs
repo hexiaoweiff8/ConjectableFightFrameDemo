@@ -32,6 +32,7 @@ public class ConjectableMono : MonoBehaviour
         // 初始化地图
         var mapBase = MapManager.Single.GetMapBase(MapId, MapCenter, UnitWidth);
         // 初始化单位
+
         // 初始化显示
         // 初始化逻辑
 	}
