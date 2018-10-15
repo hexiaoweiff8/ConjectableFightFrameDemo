@@ -11,11 +11,30 @@ namespace Assets.script.AI.Member
     /// </summary>
     public class Member : IMember
     {
-        
+
         /// <summary>
         /// 默认等待帧数
         /// </summary>
         public const int DefaultWaitFrameCount = 15;
+        /// <summary>
+        /// 显示单位
+        /// </summary>
+        public IMemberDisplay DisplayMember { get; set; }
+
+        /// <summary>
+        /// 位置X
+        /// </summary>
+        public int X { get; set; }
+
+        /// <summary>
+        /// 位置Y
+        /// </summary>
+        public int Y { get; set; }
+
+        /// <summary>
+        /// 移动速度
+        /// </summary>
+        public int Speed { get; set; }
 
         /// <summary>
         /// 启动帧
@@ -58,27 +77,22 @@ namespace Assets.script.AI.Member
         /// <param name="frame"></param>
         public void Do(long frame, IBlackBoard blackBoard)
         {
-            if (frame >= actionFrame)
-            {
-                var width = blackBoard.MapBase.MapWidth;
-                var height = blackBoard.MapBase.MapHeight;
-                // 随机获取目标位置
-                var targetX = RandomPacker.Single.GetRangeI(0, width);
-                var targetY = RandomPacker.Single.GetRangeI(0, height);
+            var width = blackBoard.MapBase.MapWidth;
+            var height = blackBoard.MapBase.MapHeight;
+            // 随机获取目标位置
+            var targetX = RandomPacker.Single.GetRangeI(0, width);
+            var targetY = RandomPacker.Single.GetRangeI(0, height);
 
-                //MoveTo x, y
-                // 前进
-                //var path = AStarPathFinding.SearchRoad(blackBoard.MapBase.GetMapArray(MapManager.MapObstacleLayer), 1, 1, 1, 1, 1, 1);
+            // 跑出显示命令, 并等待显示部分反馈的帧数
+            this.Wait(DisplayMember.Do(new MoveDisplayCommand(targetX, targetY, this, DisplayMember)));
+            
+            // 重点是结构
 
-                // 如果到达路径尽头, 重新寻路继续前进
-                // 重点是结构
+            // 性能-拆分结构
 
-                // 性能-拆分结构
+            // 单帧任务数
 
-                // 单帧任务数
-
-                // 超出任务延帧执行
-            }
+            // 超出任务延帧执行
         }
 
         /// <summary>
