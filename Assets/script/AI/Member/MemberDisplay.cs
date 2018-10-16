@@ -15,6 +15,15 @@ namespace Assets.script.AI.Member
         public GameObject Obj { get; set; }
 
         /// <summary>
+        /// 实例化
+        /// </summary>
+        /// <param name="obj"></param>
+        public MemberDisplay(GameObject obj)
+        {
+            Obj = obj;
+        }
+
+        /// <summary>
         /// 执行显示命令
         /// </summary>
         /// <param name="cmd"></param>

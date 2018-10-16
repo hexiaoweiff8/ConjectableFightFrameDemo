@@ -152,7 +152,7 @@ namespace Assets.script.AI.Member
         /// <summary>
         /// 命令类型
         /// </summary>
-        DisplayCommandType CmdType { get; set; }
+        DisplayCommandType CmdType { get; }
 
         /// <summary>
         /// 成员逻辑部分

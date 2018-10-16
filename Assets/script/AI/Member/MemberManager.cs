@@ -18,6 +18,11 @@ namespace Assets.script.AI.Member
         /// </summary>
         public long FrameCount { get { return frameCount; } }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool ShowMode { get; set; }
+
 
         /// <summary>
         /// 当前帧数
@@ -31,6 +36,7 @@ namespace Assets.script.AI.Member
         private List<IMember> memberList = new List<IMember>();
         
 
+
         /// <summary>
         /// 执行
         /// </summary>
@@ -39,7 +45,7 @@ namespace Assets.script.AI.Member
             for (var i = 0; i < memberList.Count; i++)
             {
                 var member = memberList[i];
-                if (!member.CheckWait(frameCount))
+                if ((!member.CheckWait(frameCount) && ShowMode) || !ShowMode)
                 {
                     member.Do(frameCount, BlackBoard.Single);
                 }

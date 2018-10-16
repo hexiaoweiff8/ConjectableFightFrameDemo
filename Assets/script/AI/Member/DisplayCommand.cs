@@ -14,7 +14,7 @@ namespace Assets.script.AI.Member
         /// <summary>
         /// 命令类型
         /// </summary>
-        public DisplayCommandType CmdType { get; set; }
+        public DisplayCommandType CmdType { get {return DisplayCommandType.Move;} }
 
         /// <summary>
         /// 逻辑成员
@@ -47,6 +47,15 @@ namespace Assets.script.AI.Member
         /// </summary>
         public int Y { get; private set; }
 
+        /// <summary>
+        /// 移动来源X
+        /// </summary>
+        public int FromX { get; private set; }
+
+        /// <summary>
+        /// 移动来源Y
+        /// </summary>
+        public int FromY { get; private set; }
 
         /// <summary>
         /// 初始化移动命令
@@ -55,13 +64,17 @@ namespace Assets.script.AI.Member
         /// <param name="y"></param>
         public MoveDisplayCommand(int x, int y, IMember member, IMemberDisplay memberDisplay)
         {
-            this.X = x;
-            this.Y = y;
+            this.X = x * BlackBoard.Single.MapBase.UnitWidth;
+            this.Y = y * BlackBoard.Single.MapBase.UnitWidth;
             this.Member = member;
             this.MemberDisplay = memberDisplay;
+            FromX = member.X * BlackBoard.Single.MapBase.UnitWidth;
+            FromY = member.Y * BlackBoard.Single.MapBase.UnitWidth;
+            member.X = x;
+            member.Y = y;
             // 设置启动帧数
             StartFrame = MemberManager.Single.FrameCount;
-
+            TotalFrame = CalculateFrameCount();
         }
 
         /// <summary>
@@ -70,9 +83,19 @@ namespace Assets.script.AI.Member
         /// <returns></returns>
         private int CalculateFrameCount()
         {
+            var offsetX = Math.Abs(X - FromX);
+            var offsetY = Math.Abs(Y - FromY);
 
+            var dis = Math.Sqrt(offsetX*offsetX + offsetY*offsetY);
 
-            return 0;
+            var speed = Member.Speed;
+            if (speed <= 0)
+            {
+                speed = 1;
+            }
+            var time = dis / speed;
+
+            return (int) Math.Ceiling(time);
         }
     }
 }

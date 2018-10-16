@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -45,9 +46,10 @@ namespace Assets.script.AI.Member
         /// 实例化
         /// </summary>
         /// <param name="nowFrame"></param>
-        public Member(long nowFrame)
+        public Member(long nowFrame, IMemberDisplay displayMember)
         {
             actionFrame = nowFrame;
+            DisplayMember = displayMember;
         }
         // 移动-格子
 
@@ -57,7 +59,7 @@ namespace Assets.script.AI.Member
 
         public void Wait(long targetFrame)
         {
-            actionFrame = targetFrame;
+            actionFrame = actionFrame + targetFrame;
         }
 
         /// <summary>
@@ -67,7 +69,7 @@ namespace Assets.script.AI.Member
         /// <returns></returns>
         public bool CheckWait(long frame)
         {
-            return frame >= actionFrame;
+            return frame < actionFrame;
         }
 
 
@@ -77,15 +79,19 @@ namespace Assets.script.AI.Member
         /// <param name="frame"></param>
         public void Do(long frame, IBlackBoard blackBoard)
         {
+            actionFrame = frame;
             var width = blackBoard.MapBase.MapWidth;
             var height = blackBoard.MapBase.MapHeight;
             // 随机获取目标位置
             var targetX = RandomPacker.Single.GetRangeI(0, width);
             var targetY = RandomPacker.Single.GetRangeI(0, height);
 
+
+            UnityEngine.Debug.Log("from" + X + "," + Y + " to" + targetX + "," + targetY);
             // 跑出显示命令, 并等待显示部分反馈的帧数
             this.Wait(DisplayMember.Do(new MoveDisplayCommand(targetX, targetY, this, DisplayMember)));
-            
+
+
             // 重点是结构
 
             // 性能-拆分结构

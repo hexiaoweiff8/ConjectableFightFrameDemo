@@ -22,6 +22,11 @@ public class ConjectableMono : MonoBehaviour
     /// 单位宽度
     /// </summary>
     public int UnitWidth = 1;
+
+    /// <summary>
+    /// 是否是显示模式
+    /// </summary>
+    public bool ShowMode = true;
     
 
 
@@ -33,10 +38,16 @@ public class ConjectableMono : MonoBehaviour
         Application.targetFrameRate = 45;
         // 初始化地图
         var mapBase = MapManager.Single.GetMapBase(MapId, MapCenter, UnitWidth);
+        // 设置显示模式
+        MemberManager.Single.ShowMode = ShowMode;
+        DisplayCmdManager.Single.ShowMode = ShowMode;
+        // 初始化数据黑板
+        BlackBoard.Single.MapBase = mapBase;
         // 初始化单位
-
-        // 初始化显示
-        // 初始化逻辑
+        var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
+        var member = new Member(MemberManager.Single.FrameCount, memberDisplay);
+        MemberManager.Single.Add(member);
+        
 	}
 	
 	/// <summary>
@@ -45,6 +56,9 @@ public class ConjectableMono : MonoBehaviour
 	void Update () {
 		// 驱动逻辑与显示
         MemberManager.Single.Do();
-        DisplayCmdManager.
-	}
+        DisplayCmdManager.Single.Do();
+        // 绘制地图
+        BlackBoard.Single.MapBase.DrawLine();
+
+    }
 }

@@ -11,16 +11,31 @@ namespace Assets.script.AI.Member
     /// </summary>
     public class DisplayCmdManager : SingleItem<DisplayCmdManager>, IDisplayCmdManager
     {
+
+        /// <summary>
+        /// 是否为显示模式
+        /// </summary>
+        public bool ShowMode { get; set; }
+
         /// <summary>
         /// 显示命令列表
         /// </summary>
         private List<IDisplayCommand> memberDisplayList = new List<IDisplayCommand>();
 
         /// <summary>
+        /// 命令删除列表
+        /// </summary>
+        private List<IDisplayCommand> delList = new List<IDisplayCommand>();
+
+        /// <summary>
         /// 执行命令列表
         /// </summary>
         public void Do()
         {
+            if (!ShowMode)
+            {
+                return;
+            }
             for (var i = 0; i < memberDisplayList.Count; i++)
             {
                 var cmd = memberDisplayList[i];
@@ -36,8 +51,8 @@ namespace Assets.script.AI.Member
                                 // 使用帧数做差值进行行进
                                 var targetX = moveCmd.X;
                                 var targetY = moveCmd.Y;
-                                var startX = moveCmd.Member.X;
-                                var startY = moveCmd.Member.Y;
+                                var startX = moveCmd.FromX;
+                                var startY = moveCmd.FromY;
                                 var startFrame = moveCmd.StartFrame;
                                 var nowFrame = MemberManager.Single.FrameCount;
                                 var totalFrame = moveCmd.TotalFrame;
@@ -54,7 +69,20 @@ namespace Assets.script.AI.Member
                     case DisplayCommandType.Wait:
                         break;
                 }
+
+                // 检测是否执行结束
+                if (MemberManager.Single.FrameCount >= cmd.StartFrame + cmd.TotalFrame)
+                {
+                    delList.Add(cmd);
+                }
             }
+
+            // 删除
+            foreach (var del in delList)
+            {
+                memberDisplayList.Remove(del);
+            }
+            delList.Clear();
         }
 
 
