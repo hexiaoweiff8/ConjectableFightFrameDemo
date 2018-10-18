@@ -12,6 +12,10 @@ namespace Assets.script.AI.Member
     public interface IMember
     {
         /// <summary>
+        /// 单位Id
+        /// </summary>
+        int Id { get; set; }
+        /// <summary>
         /// 显示单位
         /// </summary>
         IMemberDisplay DisplayMember { get; set; }
@@ -30,6 +34,11 @@ namespace Assets.script.AI.Member
         /// 移动速度
         /// </summary>
         int Speed { get; set; }
+
+        /// <summary>
+        /// 生命值
+        /// </summary>
+        int Hp { get; set; }
 
         /// <summary>
         /// 执行
@@ -70,6 +79,12 @@ namespace Assets.script.AI.Member
         /// </summary>
         /// <param name="cmd"></param>
         int Do(IDisplayCommand cmd);
+
+
+        /// <summary>
+        /// 删除显示单位
+        /// </summary>
+        void Remove();
     }
 
     /// <summary>
@@ -88,6 +103,13 @@ namespace Assets.script.AI.Member
         /// </summary>
         /// <param name="member"></param>
         void Add(IMember member);
+
+        /// <summary>
+        /// 获取单位
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        IMember Get(int index);
 
         /// <summary>
         /// 删除一个单位

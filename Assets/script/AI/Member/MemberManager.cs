@@ -35,6 +35,11 @@ namespace Assets.script.AI.Member
         /// </summary>
         public bool ShowMode { get; set; }
 
+        /// <summary>
+        /// 成员数量
+        /// </summary>
+        public int MemberCount { get { return memberList.Count; } }
+
 
         /// <summary>
         /// 当前帧数
@@ -46,6 +51,26 @@ namespace Assets.script.AI.Member
         /// member集合
         /// </summary>
         private List<IMember> memberList = new List<IMember>();
+
+        /// <summary>
+        /// 检测战斗结果
+        /// </summary>
+        private Func<List<IMember>, bool> checkFightEnd = null;
+
+        /// <summary>
+        /// 是否战斗结束
+        /// </summary>
+        private bool isFighting = false;
+
+
+        /// <summary>
+        /// 设置检测战斗结束
+        /// </summary>
+        /// <param name="check"></param>
+        public void SetCheckFightEndFunc(Func<List<IMember>, bool> check)
+        {
+            checkFightEnd = check;
+        }
         
 
 
@@ -54,18 +79,34 @@ namespace Assets.script.AI.Member
         /// </summary>
         public void Do()
         {
-            var targetFrame = (ShowMode ? FrameSpeed : FastFrameSpeed) + frameCount;
-            while (targetFrame > frameCount)
+            if (isFighting)
             {
-                for (var i = 0; i < memberList.Count; i++)
+                var targetFrame = (ShowMode ? FrameSpeed : FastFrameSpeed) + frameCount;
+                while (targetFrame > frameCount)
                 {
-                    var member = memberList[i];
-                    if ((!member.CheckWait(frameCount) && ShowMode) || !ShowMode)
+                    for (var i = 0; i < memberList.Count; i++)
                     {
-                        member.Do(frameCount, BlackBoard.Single);
+                        var member = memberList[i];
+                        if ((!member.CheckWait(frameCount) && ShowMode) || !ShowMode)
+                        {
+                            member.Do(frameCount, BlackBoard.Single);
+                        }
+                    }
+                    frameCount++;
+
+                    if (checkFightEnd != null)
+                    {
+                        isFighting = checkFightEnd(memberList);
+                    }
+                    else
+                    {
+                        // 默认战斗结束检测
+                        if (memberList.Count <= 1)
+                        {
+                            Debug.Log("战斗结束");
+                        }
                     }
                 }
-                frameCount++;
             }
         }
 
@@ -79,6 +120,21 @@ namespace Assets.script.AI.Member
             memberList.Add(member);
         }
 
+        /// <summary>
+        /// 获取一个单位
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public IMember Get(int index)
+        {
+            if (memberList.Count > index)
+            {
+                return memberList[index];
+            }
+
+            return null;
+        }
+
 
         /// <summary>
         /// 删除成员
@@ -87,6 +143,8 @@ namespace Assets.script.AI.Member
         public void Remove(IMember member)
         {
             memberList.Remove(member);
+            // 从显示层消除
+            member.DisplayMember.Remove();
         }
 
 
@@ -97,6 +155,7 @@ namespace Assets.script.AI.Member
         {
             frameCount = 0;
             memberList.Clear();
+            isFighting = true;
         }
     }
 

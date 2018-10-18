@@ -29,6 +29,11 @@ public class ConjectableMono : MonoBehaviour
     public int MemberCount = 10;
 
     /// <summary>
+    /// 随机数种子
+    /// </summary>
+    public int RandomSeed = 1;
+
+    /// <summary>
     /// 是否是显示模式
     /// </summary>
     public bool ShowMode = true;
@@ -41,6 +46,7 @@ public class ConjectableMono : MonoBehaviour
 	void Start () {
         // 设置游戏帧率
         Application.targetFrameRate = 45;
+        RandomPacker.Single.SetSeed(RandomSeed);
         // 初始化地图
         var mapBase = MapManager.Single.GetMapBase(MapId, MapCenter, UnitWidth);
         // 设置显示模式
@@ -49,13 +55,29 @@ public class ConjectableMono : MonoBehaviour
         // 初始化数据黑板
         BlackBoard.Single.MapBase = mapBase;
 
+        MemberManager.Single.Reset();
+
         for (var i = 0; i < MemberCount; i++)
         {
             // 初始化单位
             var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
             var member = new Member(MemberManager.Single.FrameCount, memberDisplay);
+            member.Hp = 100;
             MemberManager.Single.Add(member);
         }
+
+        // 设置战斗结束检测
+        MemberManager.Single.SetCheckFightEndFunc((memberList) =>
+        {
+            if (memberList.Count == 0)
+            {
+                // 战斗结束
+                Debug.Log("战斗结束");
+                return false;
+            }
+            // 战斗继续
+            return true;
+        });
         
 	}
 	

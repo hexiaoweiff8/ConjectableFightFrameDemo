@@ -14,6 +14,11 @@ namespace Assets.script.AI.Member
     {
 
         /// <summary>
+        /// 单位Id
+        /// </summary>
+        public int Id { get; set; }
+
+        /// <summary>
         /// 默认等待帧数
         /// </summary>
         public const int DefaultWaitFrameCount = 15;
@@ -37,6 +42,19 @@ namespace Assets.script.AI.Member
         /// </summary>
         public int Speed { get; set; }
 
+
+        /// <summary>
+        /// 生命值
+        /// </summary>
+        public int Hp { get; set; }
+
+
+        /// <summary>
+        /// id种子
+        /// </summary>
+        private static int idSeed = 1;
+        
+
         /// <summary>
         /// 启动帧
         /// </summary>
@@ -55,6 +73,7 @@ namespace Assets.script.AI.Member
         {
             actionFrame = nowFrame;
             DisplayMember = displayMember;
+            Id = idSeed++;
         }
         // 移动-格子
 
@@ -85,6 +104,14 @@ namespace Assets.script.AI.Member
         public void Do(long frame, IBlackBoard blackBoard)
         {
             actionFrame = frame;
+
+            // 检查是否死亡
+
+            if (Hp <= 0)
+            {
+                MemberManager.Single.Remove(this);
+                UnityEngine.Debug.Log("单位死亡Id:" + Id);
+            }
 
             if (pathList != null && pathList.Count > 0)
             {
@@ -118,12 +145,22 @@ namespace Assets.script.AI.Member
                         couldNotPass = false;
                         pathList = new Stack<Node>(path.ToArray());
                     }
+
+                    var index = RandomPacker.Single.GetRangeI(0, MemberManager.Single.MemberCount);
+
+                    // 随机攻击一个目标
+                    var targetMember = MemberManager.Single.Get(index);
+                    if (targetMember != null)
+                    {
+                        targetMember.Hp -= 10;
+                        UnityEngine.Debug.Log(Id + "攻击Id:" + targetMember.Id + " Hp:" + 10);
+                    }
                 }
 
                 // 向目标寻路, 如果不可达继续寻路
                 
                 var nextNode = pathList.Pop();
-                UnityEngine.Debug.Log("from" + X + "," + Y + " to" + targetX + "," + targetY);
+                UnityEngine.Debug.Log(Id + " from" + X + "," + Y + " to" + targetX + "," + targetY + "Hp:" + Hp);
                 // 跑出显示命令, 并等待显示部分反馈的帧数
                 this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
 

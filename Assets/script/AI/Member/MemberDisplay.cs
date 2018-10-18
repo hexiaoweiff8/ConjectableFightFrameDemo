@@ -33,6 +33,14 @@ namespace Assets.script.AI.Member
         }
 
         /// <summary>
+        /// 删除显示单位
+        /// </summary>
+        public void Remove()
+        {
+            GameObject.Destroy(Obj);
+        }
+
+        /// <summary>
         /// 执行命令
         /// </summary>
         /// <param name="cmd"></param>
