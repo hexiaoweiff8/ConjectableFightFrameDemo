@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace Assets.script.AI.Member
 {
@@ -12,6 +13,17 @@ namespace Assets.script.AI.Member
     /// </summary>
     public class MemberManager : SingleItem<MemberManager>, IMemberManager
     {
+
+        /// <summary>
+        /// 帧速度
+        /// </summary>
+        public const int FrameSpeed = 1;
+
+        /// <summary>
+        /// 推断模式帧速度
+        /// </summary>
+        public const int FastFrameSpeed = 60;
+
 
         /// <summary>
         /// 当前帧数
@@ -42,15 +54,19 @@ namespace Assets.script.AI.Member
         /// </summary>
         public void Do()
         {
-            for (var i = 0; i < memberList.Count; i++)
+            var targetFrame = (ShowMode ? FrameSpeed : FastFrameSpeed) + frameCount;
+            while (targetFrame > frameCount)
             {
-                var member = memberList[i];
-                if ((!member.CheckWait(frameCount) && ShowMode) || !ShowMode)
+                for (var i = 0; i < memberList.Count; i++)
                 {
-                    member.Do(frameCount, BlackBoard.Single);
+                    var member = memberList[i];
+                    if ((!member.CheckWait(frameCount) && ShowMode) || !ShowMode)
+                    {
+                        member.Do(frameCount, BlackBoard.Single);
+                    }
                 }
+                frameCount++;
             }
-            frameCount++;
         }
 
 

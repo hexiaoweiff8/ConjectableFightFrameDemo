@@ -34,7 +34,7 @@ public class RandomPacker
     /// <summary>
     /// 随机类
     /// </summary>
-    private Random random = new Random(99);
+    private LCGRandom random = new LCGRandom(99);
 
     /// <summary>
     /// 本地随机种子
@@ -48,7 +48,7 @@ public class RandomPacker
     public void SetSeed(int newSeed)
     {
         seed = newSeed;
-        random = new Random(seed);
+        random = new LCGRandom((ulong)seed);
     }
 
     /// <summary>
@@ -59,6 +59,44 @@ public class RandomPacker
     /// <returns></returns>
     public int GetRangeI(int min, int max)
     {
-        return random.Next(min, max);
+        return (int)random.Rand((ulong)min, (ulong)max);
     }
+}
+
+
+
+/// <summary>
+/// 线性同余
+/// </summary>
+public class LCGRandom
+{
+    /// <summary>
+    /// 实例化
+    /// </summary>
+    /// <param name="seed"></param>
+    public LCGRandom(ulong seed = 0)
+    {
+        rand_seed = seed;
+    }
+
+    /// <summary>
+    /// 生成随机数
+    /// </summary>
+    /// <param name="min"></param>
+    /// <param name="max"></param>
+    /// <returns></returns>
+    public ulong Rand(ulong min, ulong max)
+    {
+        //System.Diagnostics.Debug.Assert(max > min && min >= 0);
+
+        ulong A = 0x5DEECE66D;
+        ulong C = 0xB;
+        ulong M = ((ulong)1 << 48);
+        rand_seed = (rand_seed * A + C) % M;
+
+        ulong bb = max - min;
+        ulong value = rand_seed % bb + min;
+        return value;
+    }
+    private ulong rand_seed;
 }

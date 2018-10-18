@@ -43,6 +43,11 @@ namespace Assets.script.AI.Member
         private long actionFrame = 0;
 
         /// <summary>
+        /// 路径
+        /// </summary>
+        private Stack<Node> pathList = null;
+
+        /// <summary>
         /// 实例化
         /// </summary>
         /// <param name="nowFrame"></param>
@@ -80,17 +85,49 @@ namespace Assets.script.AI.Member
         public void Do(long frame, IBlackBoard blackBoard)
         {
             actionFrame = frame;
-            var width = blackBoard.MapBase.MapWidth;
-            var height = blackBoard.MapBase.MapHeight;
-            // 随机获取目标位置
-            var targetX = RandomPacker.Single.GetRangeI(0, width);
-            var targetY = RandomPacker.Single.GetRangeI(0, height);
 
+            if (pathList != null && pathList.Count > 0)
+            {
+                // 继续前进
+                var nextNode = pathList.Pop();
+                // 跑出显示命令, 并等待显示部分反馈的帧数
+                this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
+            }
+            else
+            {
 
-            UnityEngine.Debug.Log("from" + X + "," + Y + " to" + targetX + "," + targetY);
-            // 跑出显示命令, 并等待显示部分反馈的帧数
-            this.Wait(DisplayMember.Do(new MoveDisplayCommand(targetX, targetY, this, DisplayMember)));
+                var width = blackBoard.MapBase.MapWidth;
+                var height = blackBoard.MapBase.MapHeight;
 
+                var couldNotPass = true;
+                int targetX = 0;
+                int targetY = 0;
+
+                while (couldNotPass)
+                {
+                    // 随机获取目标位置
+                    targetX = RandomPacker.Single.GetRangeI(0, width);
+                    targetY = RandomPacker.Single.GetRangeI(0, height);
+
+                    var path = AStarPathFinding.SearchRoad(BlackBoard.Single.MapBase.GetMapArray(MapManager.MapObstacleLayer),
+                            X, Y,
+                            targetX, targetY, 1, 1);
+
+                    if (path != null && path.Count > 0)
+                    {
+                        couldNotPass = false;
+                        pathList = new Stack<Node>(path.ToArray());
+                    }
+                }
+
+                // 向目标寻路, 如果不可达继续寻路
+                
+                var nextNode = pathList.Pop();
+                UnityEngine.Debug.Log("from" + X + "," + Y + " to" + targetX + "," + targetY);
+                // 跑出显示命令, 并等待显示部分反馈的帧数
+                this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
+
+            }
 
             // 重点是结构
 

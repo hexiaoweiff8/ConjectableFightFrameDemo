@@ -24,6 +24,11 @@ public class ConjectableMono : MonoBehaviour
     public int UnitWidth = 1;
 
     /// <summary>
+    /// 创建单位数量
+    /// </summary>
+    public int MemberCount = 10;
+
+    /// <summary>
     /// 是否是显示模式
     /// </summary>
     public bool ShowMode = true;
@@ -43,10 +48,14 @@ public class ConjectableMono : MonoBehaviour
         DisplayCmdManager.Single.ShowMode = ShowMode;
         // 初始化数据黑板
         BlackBoard.Single.MapBase = mapBase;
-        // 初始化单位
-        var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
-        var member = new Member(MemberManager.Single.FrameCount, memberDisplay);
-        MemberManager.Single.Add(member);
+
+        for (var i = 0; i < MemberCount; i++)
+        {
+            // 初始化单位
+            var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
+            var member = new Member(MemberManager.Single.FrameCount, memberDisplay);
+            MemberManager.Single.Add(member);
+        }
         
 	}
 	
