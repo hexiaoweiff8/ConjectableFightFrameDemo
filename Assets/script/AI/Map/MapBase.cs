@@ -344,14 +344,16 @@ public class MapBase
         mapHeight = newMapHeight;
 
         this.unitWidth = unitWidth;
-        // 地图半宽高
-        var halfWidht = mapWidth * unitWidth * 0.5f - unitWidth * 0.5f;
-        var halfHeight = mapHeight * unitWidth * 0.5f - unitWidth * 0.5f;
+        // 地图宽高
+        var width = mapWidth * unitWidth;
+        var height = mapHeight * unitWidth;
+        //var halfWidht = mapWidth * unitWidth * 0.5f - unitWidth * 0.5f;
+        //var halfHeight = mapHeight * unitWidth * 0.5f - unitWidth * 0.5f;
         // 取矩形四角点
-        Leftup = new Vector2(MapCenter.x - halfWidht, MapCenter.y + halfHeight);
-        Rightup = new Vector2(MapCenter.x + halfWidht, MapCenter.y + halfHeight);
-        Leftdown = new Vector2(MapCenter.x - halfWidht, MapCenter.y - halfHeight);
-        Rightdown = new Vector2(MapCenter.x + halfWidht, MapCenter.y - halfHeight);
+        Leftup = new Vector2(MapCenter.x, MapCenter.y + height);
+        Rightup = new Vector2(MapCenter.x + width, MapCenter.y + height);
+        Leftdown = new Vector2(MapCenter.x, MapCenter.y);
+        Rightdown = new Vector2(MapCenter.x + width, MapCenter.y);
     }
 
     /// <summary>
@@ -574,30 +576,4 @@ public abstract class MapCellBase
             historyUnitWidth = unitWidth;
         }
     }
-}
-
-
-/// <summary>
-/// 单位类型
-/// </summary>
-public enum UnitType
-{
-    // 地图单元
-    MapCell = 1,
-    // 障碍物
-    Obstacle = 2,
-    // NPC
-    NPC = 3,
-    // 战斗单位
-    FightUnit = 4,
-    // 出兵点
-    OutPoint = 5,
-    // 入兵点
-    InPoint = 6,
-    // 塔基
-    TowerPoint = 7,
-    // 塔
-    Tower = 8,
-    // 塔cell
-    TowerCell = 9,
 }

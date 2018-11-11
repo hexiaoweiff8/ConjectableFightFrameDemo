@@ -75,7 +75,7 @@ public class MapManager : SingleItem<MapManager>
     /// <summary>
     /// 地图宽高数据
     /// </summary>
-    private Dictionary<string, Vector2> mapWHDic = null; 
+    private Dictionary<string, Vector2> mapWHDic = null;
 
     /// <summary>
     /// 地图数据类字典
@@ -245,15 +245,15 @@ public class MapManager : SingleItem<MapManager>
                 if (mapData[i][j] > 0)
                 {
                     // 加载模型
-                    //var mapCell = UnitFictory.Single.CreateUnit<MapCellBase>(layer, mapData[i][j]);
-                    //mapCell.X = j;
-                    //mapCell.Y = i;
-                    //if (mapBase != null)
-                    //{
-                    //    mapCell.Draw(mapBase.Leftdown, mapBase.UnitWidth);
-                    //}
-                    // 根据数据加载
-                    //mapCellDataArray[i, j] = mapCell;
+                    var mapCell = UnitFictory.Single.CreateUnit<MapCellBase>(layer, mapData[i][j]);
+                    mapCell.X = j;
+                    mapCell.Y = i;
+                    if (mapBase != null)
+                    {
+                        mapCell.Draw(mapBase.Leftdown, mapBase.UnitWidth);
+                    }
+                    //根据数据加载
+                    mapCellDataArray[i, j] = mapCell;
                 }
             }
         }
