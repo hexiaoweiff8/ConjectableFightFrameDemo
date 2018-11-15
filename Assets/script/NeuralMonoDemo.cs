@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 神经网络游戏Demo
 /// </summary>
-public class NeuralMono : MonoBehaviour {
+public class NeuralMonoDemo : MonoBehaviour {
 
     // 初始化网络结构
     // 规则, 随机出现障碍, 单位碰到障碍重置在安全位置,
@@ -15,6 +15,12 @@ public class NeuralMono : MonoBehaviour {
     // 如何组合, 单位崩溃原则
     // 存活单位放入名人堂
     // 规则制定
+
+    // 帧同步, 
+    // ILRuntime
+    // 第一个版本, 躲避障碍
+    // 升级神经网络结构, 添加ReLu, 等计算方式
+    // 单隐层节点数量粗略估计公式: NH = (NI + Max(No, Nc)) / 2
 
 	void Start () {
         // 创建单位
