@@ -157,6 +157,8 @@ namespace Assets.script.AI.Member
             memberList.Clear();
             isFighting = true;
         }
+
+        // 消息处理
     }
 
     /// <summary>
@@ -177,6 +179,40 @@ namespace Assets.script.AI.Member
             MapBase.Clear();
             MapBase = null;
         }
+    }
+
+    /// <summary>
+    /// 网络打包类
+    /// </summary>
+    [Serializable]
+    public class Packet
+    {
+        // 操作类型
+        // 出生
+        // 移动
+        // 攻击
+        // 死亡
+        public OptionType OpType = OptionType.None;
+
+        // 操作数据
+        // 出生位置, 血量
+        // 移动目标位置
+        // 攻击目标
+        // 死亡标志
+        public Dictionary<string, string> Param = new Dictionary<string, string>();
+
+    }
+
+    /// <summary>
+    /// 操作类型
+    /// </summary>
+    public enum OptionType
+    {
+        None,
+        Create,
+        Move,
+        Attack,
+        Dead
     }
 
 }

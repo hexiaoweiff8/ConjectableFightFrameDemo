@@ -1,21 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
 namespace Assets.script.AI.Member
 {
-
     /// <summary>
-    /// 单位成员(逻辑)
+    /// 网络单位, 操作来自于网络
     /// </summary>
-    public class Member : IMember
-    {
-
-        /// <summary>
-        /// 单位Id
-        /// </summary>
+    public class NetMember : IMember
+    {  /// <summary>
+       /// 单位Id
+       /// </summary>
         public int Id { get; set; }
 
         /// <summary>
@@ -58,7 +54,7 @@ namespace Assets.script.AI.Member
         /// id种子
         /// </summary>
         private static int idSeed = 1;
-        
+
 
         /// <summary>
         /// 启动帧
@@ -74,7 +70,7 @@ namespace Assets.script.AI.Member
         /// 实例化
         /// </summary>
         /// <param name="nowFrame"></param>
-        public Member(long nowFrame, IMemberDisplay displayMember)
+        public NetMember(long nowFrame, IMemberDisplay displayMember)
         {
             actionFrame = nowFrame;
             DisplayMember = displayMember;
@@ -118,64 +114,7 @@ namespace Assets.script.AI.Member
                 UnityEngine.Debug.Log("单位死亡Id:" + Id);
                 return;
             }
-
-            if (pathList != null && pathList.Count > 0)
-            {
-                // 继续前进
-                var nextNode = pathList.Pop();
-                // 跑出显示命令, 并等待显示部分反馈的帧数
-                this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
-            }
-            else
-            {
-
-                var width = blackBoard.MapBase.MapWidth;
-                var height = blackBoard.MapBase.MapHeight;
-
-                var couldNotPass = true;
-                int targetX = 0;
-                int targetY = 0;
-
-                while (couldNotPass)
-                {
-                    // 随机获取目标位置
-                    targetX = RandomPacker.Single.GetRangeI(0, width);
-                    targetY = RandomPacker.Single.GetRangeI(0, height);
-
-                    var path =
-                        AStarPathFinding.SearchRoad(
-                            BlackBoard.Single.MapBase.GetMapArray(MapManager.MapObstacleLayer),
-                            X, Y,
-                            targetX, targetY, 1, 1);
-
-                    if (path != null && path.Count > 0)
-                    {
-                        couldNotPass = false;
-                        pathList = new Stack<Node>(path.ToArray());
-                    }
-
-                    var index = RandomPacker.Single.GetRangeI(0, MemberManager.Single.MemberCount);
-
-                    // 随机攻击一个目标
-                    var targetMember = MemberManager.Single.Get(index);
-                    if (targetMember != null)
-                    {
-                        targetMember.Hp -= 10;
-                        UnityEngine.Debug.Log(Id + "攻击Id:" + targetMember.Id + " Hp:" + 10);
-                    }
-                }
-
-                // 向目标寻路, 如果不可达继续寻路
-
-                var nextNode = pathList.Pop();
-                UnityEngine.Debug.Log(Id + " from" + X + "," + Y + " to" + targetX + "," + targetY + "Hp:" + Hp);
-                // 跑出显示命令, 并等待显示部分反馈的帧数
-                this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
-
-                // TODO 发送操作
-
-
-            }
+            
         }
 
         /// <summary>

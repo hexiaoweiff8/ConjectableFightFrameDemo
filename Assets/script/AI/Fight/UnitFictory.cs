@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.UI;
+//using UnityEngine.UI;
 
 
 /// <summary>
@@ -194,7 +194,7 @@ public class UnitFictory : SingleItem<UnitFictory>
             // 加载dataId对应的资源
             if (result != null)
             {
-                var image = result.GetComponent<Image>();
+                //var image = result.GetComponent<Image>();
                 //var resouceName = DataPacker.Single[ResourceTableName][dataId.ToString()].GetString(ResourceName);
                 //image.sprite = PoolLoader.Single.LoadForType<Sprite>(resouceName);
                 //result.SetActive(true);
