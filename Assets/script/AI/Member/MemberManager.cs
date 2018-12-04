@@ -1,7 +1,10 @@
-﻿using JetBrains.Annotations;
+﻿using Assets.script.AI.Net;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using UnityEngine;
 
@@ -36,6 +39,11 @@ namespace Assets.script.AI.Member
         public bool ShowMode { get; set; }
 
         /// <summary>
+        /// 是否为网络模式
+        /// </summary>
+        public bool IsNetMode { get; set; }
+
+        /// <summary>
         /// 成员数量
         /// </summary>
         public int MemberCount { get { return memberList.Count; } }
@@ -62,6 +70,11 @@ namespace Assets.script.AI.Member
         /// </summary>
         private bool isFighting = false;
 
+        /// <summary>
+        /// 反序列化
+        /// </summary>
+        private BinaryFormatter binFormat = new BinaryFormatter();//创建二进制序列化器
+
 
         /// <summary>
         /// 设置检测战斗结束
@@ -70,6 +83,91 @@ namespace Assets.script.AI.Member
         public void SetCheckFightEndFunc(Func<List<IMember>, bool> check)
         {
             checkFightEnd = check;
+        }
+
+        /// <summary>
+        /// 初始化网络
+        /// </summary>
+        /// <param name="ServerIp"></param>
+        /// <param name="ServerPort"></param>
+        public void InitNet(string ServerIp, int ServerPort)
+        {
+            IsNetMode = true;
+            NetManager.Single.Connect(ServerIp, ServerPort);
+            NetManager.Single.ComputeAction = (bytes) => { 
+                // 处理数据
+                // 反序列化
+                var stream = new MemoryStream(bytes);
+                var packet = binFormat.Deserialize(stream) as Packet;
+                // 分发操作
+                RouteOption(packet);
+            };
+        }
+
+        /// <summary>
+        /// 分发操作
+        /// </summary>
+        /// <param name="packet"></param>
+        public void RouteOption(Packet packet)
+        {
+            if (packet.OpType == OptionType.Create)
+            {
+                // 创建单位
+                // 单位Id
+                var newId = int.Parse(packet.Param["id"]);
+                // 初始位置
+                var posX = int.Parse(packet.Param["posX"]);
+                var posY = int.Parse(packet.Param["posY"]);
+                // 血量
+                var hp = int.Parse(packet.Param["hp"]);
+
+                
+
+            }
+            var targetMember = memberList.Find((member) => member.Id == packet.MemberId);
+            if (targetMember != null)
+            {
+                // 进行操作
+
+                switch (packet.OpType)
+                {
+                    case OptionType.Attack:
+                        // 单位攻击
+                        {
+                            // 攻击目标
+                            var atkTarId = int.Parse(packet.Param["tarId"]);
+                            // 攻击方式
+                            var atkType = int.Parse(packet.Param["atkType"]);
+                            // 攻击伤害
+                            var dmg = int.Parse(packet.Param["dmg"]);
+                        }
+                        break;
+                    case OptionType.Move:
+                        // 单位移动
+                        {
+                            // 移动目标
+                            var toX = int.Parse(packet.Param["toX"]);
+                            var toY = int.Parse(packet.Param["toY"]);
+                            // 移动来源
+                            var fromX = int.Parse(packet.Param["fromX"]);
+                            var fromY = int.Parse(packet.Param["fromY"]);
+                        }
+                        break;
+                    case OptionType.None:
+                        // 无操作
+                        {
+                            Debug.LogError("无操作");
+                        }
+                        break;
+                    case OptionType.Dead:
+                        // 单位死亡
+                        {
+                            // 击杀者
+                            var killerId = int.Parse(packet.Param["killerId"]);
+                        }
+                        break;
+                }
+            }
         }
         
 
@@ -187,6 +285,11 @@ namespace Assets.script.AI.Member
     [Serializable]
     public class Packet
     {
+        /// <summary>
+        /// 单位Id
+        /// </summary>
+        public int MemberId;
+
         // 操作类型
         // 出生
         // 移动

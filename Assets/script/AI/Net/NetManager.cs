@@ -10,8 +10,32 @@ namespace Assets.script.AI.Net
 {
     public class NetManager
     {
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static NetManager Single
+        {
+            get
+            {
+                if (single == null)
+                {
+                    single = new NetManager();
+                }
+                return single;
+            }
+        }
 
+        /// <summary>
+        /// 单例对象
+        /// </summary>
+        private NetManager single;
+
+
+        /// <summary>
+        /// 消息处理方法
+        /// </summary>
         public Action<byte[]> ComputeAction;
+
         /// <summary>
         /// udp网络连接
         /// </summary>
@@ -42,6 +66,25 @@ namespace Assets.script.AI.Net
                     udpClient = new UdpClient();
                     udpClient.Connect(ip, port);
                     udpClient.Event_Recv += OnReceive;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 发送消息
+        /// </summary>
+        /// <param name="bytes">被发送内容</param>
+        /// <param name="type">发送类型</param>
+        public void Send(byte[] bytes, ClientType type = ClientType.UDP)
+        {
+            switch (type)
+            {
+                case ClientType.TCP:
+                    tcpClient.Send(bytes);
+                    break;
+
+                case ClientType.UDP:
+                    udpClient.Send(bytes);
                     break;
             }
         }

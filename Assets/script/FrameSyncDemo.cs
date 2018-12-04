@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Assets.script.AI.Member;
 using UnityEngine;
+using Assets.script.AI.Net;
 
 public class FrameSyncDemo : MonoBehaviour
 {
@@ -93,6 +94,11 @@ public class FrameSyncDemo : MonoBehaviour
             // 战斗继续
             return true;
         });
+
+        if (IsServer)
+        {
+            // 建立服务器
+        }
 
     }
     

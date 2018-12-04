@@ -25,11 +25,14 @@ public class NeuralMonoDemo : MonoBehaviour {
     // 第一个版本, 躲避障碍
     // 升级神经网络结构, 添加ReLu, 等计算方式
     // 单隐层节点数量粗略估计公式: NH = (NI + Max(No, Nc)) / 2
+    // Python ,人脸识别, 人体识别
 
 
     // 训练一个单位躲避障碍
     // 单位8输入, 2输出
     // 绘制出数学范围
+
+
 
 	void Start () {
         // 创建单位
