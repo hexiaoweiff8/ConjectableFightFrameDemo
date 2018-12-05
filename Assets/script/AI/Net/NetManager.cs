@@ -28,7 +28,7 @@ namespace Assets.script.AI.Net
         /// <summary>
         /// 单例对象
         /// </summary>
-        private NetManager single;
+        private static NetManager single;
 
 
         /// <summary>
