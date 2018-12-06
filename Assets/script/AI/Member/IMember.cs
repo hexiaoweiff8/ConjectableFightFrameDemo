@@ -199,6 +199,14 @@ namespace Assets.script.AI.Member
     }
 
     /// <summary>
+    /// 操作接口
+    /// </summary>
+    public interface IOptionCommand
+    {
+        
+    }
+
+    /// <summary>
     /// 命令类型
     /// </summary>
     public enum DisplayCommandType

@@ -170,12 +170,20 @@ namespace Assets.script.AI.Member
                 var nextNode = pathList.Pop();
                 UnityEngine.Debug.Log(Id + " from" + X + "," + Y + " to" + targetX + "," + targetY + "Hp:" + Hp);
                 // 跑出显示命令, 并等待显示部分反馈的帧数
-                this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
 
                 // TODO 发送操作
 
 
             }
+        }
+
+        /// <summary>
+        /// 执行命令
+        /// </summary>
+        public void DoCmd()
+        {
+            this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
+
         }
 
         /// <summary>
