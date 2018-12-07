@@ -48,6 +48,13 @@ namespace Assets.script.AI.Member
         /// </summary>
         public int MemberCount { get { return memberList.Count; } }
 
+        /// <summary>
+        /// 是否为服务端
+        /// 如果false则为客户端
+        /// 如果true则为服务端
+        /// </summary>
+        public bool IsServer = false;
+
 
         /// <summary>
         /// 当前帧数
@@ -98,9 +105,9 @@ namespace Assets.script.AI.Member
                 // 处理数据
                 // 反序列化
                 var stream = new MemoryStream(bytes);
-                var packet = binFormat.Deserialize(stream) as Packet;
+                var packet = binFormat.Deserialize(stream) as Commend;
                 // 分发操作
-                RouteOption(packet);
+                Dispatch(packet);
             };
         }
 
@@ -108,7 +115,7 @@ namespace Assets.script.AI.Member
         /// 分发操作
         /// </summary>
         /// <param name="packet"></param>
-        public void RouteOption(Packet packet)
+        public void RouteOption(Commend packet)
         {
             if (packet.OpType == OptionType.Create)
             {
@@ -208,6 +215,20 @@ namespace Assets.script.AI.Member
             }
         }
 
+        /// <summary>
+        /// 抛出消息
+        /// </summary>
+        public void Dispatch(IOptionCommand cmd)
+        {
+            for (var i = 0; i < memberList.Count; i++)
+            {
+                if (cmd.MemberId == memberList[i].Id)
+                {
+                    memberList[i].Dispatch(cmd);
+                }
+            }
+        }
+
 
         /// <summary>
         /// 添加成员
@@ -283,26 +304,34 @@ namespace Assets.script.AI.Member
     /// 网络打包类
     /// </summary>
     [Serializable]
-    public class Packet
+    public class Commend : IOptionCommand
     {
         /// <summary>
         /// 单位Id
         /// </summary>
-        public int MemberId;
+        public int MemberId { get; set; }
 
         // 操作类型
         // 出生
         // 移动
         // 攻击
         // 死亡
-        public OptionType OpType = OptionType.None;
+        public OptionType OpType { get; set; }
 
         // 操作数据
         // 出生位置, 血量
         // 移动目标位置
         // 攻击目标
         // 死亡标志
-        public Dictionary<string, string> Param = new Dictionary<string, string>();
+        public Dictionary<string, string> Param { get; set; }
+
+        /// <summary>
+        /// 实例化
+        /// </summary>
+        public Commend()
+        {
+            Param = new Dictionary<string, string>();
+        }
 
     }
 

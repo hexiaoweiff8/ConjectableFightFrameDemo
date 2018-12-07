@@ -180,9 +180,71 @@ namespace Assets.script.AI.Member
         /// <summary>
         /// 执行命令
         /// </summary>
-        public void DoCmd()
+        public void Dispatch(IOptionCommand cmd)
         {
-            this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
+            if (cmd.OpType == OptionType.Create)
+            {
+                // 创建单位
+                // 单位Id
+                var newId = int.Parse(cmd.Param["id"]);
+                // 初始位置
+                var posX = int.Parse(cmd.Param["posX"]);
+                var posY = int.Parse(cmd.Param["posY"]);
+                // 血量
+                var hp = int.Parse(cmd.Param["hp"]);
+
+
+
+            }
+            // 进行操作
+
+            switch (cmd.OpType)
+            {
+                case OptionType.Attack:
+                    // 单位攻击
+                {
+                    // 攻击目标
+                    var atkTarId = int.Parse(cmd.Param["tarId"]);
+                    // 攻击方式
+                    var atkType = int.Parse(cmd.Param["atkType"]);
+                    // 攻击伤害
+                    var dmg = int.Parse(cmd.Param["dmg"]);
+                    Hp -= dmg;
+                }
+                    break;
+                case OptionType.Move:
+                    // 单位移动
+                {
+                    // 移动目标
+                    var toX = int.Parse(cmd.Param["toX"]);
+                    var toY = int.Parse(cmd.Param["toY"]);
+                    // 移动来源
+                    var fromX = int.Parse(cmd.Param["fromX"]);
+                    var fromY = int.Parse(cmd.Param["fromY"]);
+                        // 验证来源
+                    if (this.X != fromX || Y != fromY)
+                    {
+                        UnityEngine.Debug.LogError("数据异常, 刷新位置");
+                    }
+                    this.Wait(DisplayMember.Do(new MoveDisplayCommand(toX, toY, this, DisplayMember)));
+                }
+                    break;
+                case OptionType.None:
+                    // 无操作
+                {
+                    UnityEngine.Debug.LogError("无操作");
+                }
+                    break;
+                case OptionType.Dead:
+                    // 单位死亡
+                {
+                    // 击杀者
+                    var killerId = int.Parse(cmd.Param["killerId"]);
+                }
+                    break;
+            }
+
+
 
         }
 

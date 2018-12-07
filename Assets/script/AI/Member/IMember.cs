@@ -46,6 +46,12 @@ namespace Assets.script.AI.Member
         void Do(long frame, IBlackBoard blackBoard);
 
         /// <summary>
+        /// 处理操作命令
+        /// </summary>
+        /// <param name="cmd"></param>
+        void Dispatch(IOptionCommand cmd);
+
+        /// <summary>
         /// 等待
         /// 等待帧数
         /// </summary>
@@ -99,6 +105,12 @@ namespace Assets.script.AI.Member
         void Do();
 
         /// <summary>
+        /// 处理操作命令
+        /// </summary>
+        /// <param name="cmd"></param>
+        void Dispatch(IOptionCommand cmd);
+
+        /// <summary>
         /// 添加成员
         /// </summary>
         /// <param name="member"></param>
@@ -114,7 +126,7 @@ namespace Assets.script.AI.Member
         /// <summary>
         /// 删除一个单位
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="member"></param>
         void Remove(IMember member);
 
         /// <summary>
@@ -203,7 +215,25 @@ namespace Assets.script.AI.Member
     /// </summary>
     public interface IOptionCommand
     {
-        
+
+        /// <summary>
+        /// 单位Id
+        /// </summary>
+        int MemberId { get; set; }
+
+        // 操作类型
+        // 出生
+        // 移动
+        // 攻击
+        // 死亡
+        OptionType OpType { get; set; }
+
+        // 操作数据
+        // 出生位置, 血量
+        // 移动目标位置
+        // 攻击目标
+        // 死亡标志
+        Dictionary<string, string> Param { get; set; }
     }
 
     /// <summary>

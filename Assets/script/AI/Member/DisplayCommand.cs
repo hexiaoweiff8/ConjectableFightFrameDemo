@@ -59,6 +59,7 @@ namespace Assets.script.AI.Member
 
         /// <summary>
         /// 初始化移动命令
+        /// TODO 添加来源位置
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
