@@ -22,10 +22,16 @@ namespace Assets.script.AI.Member
         /// 默认等待帧数
         /// </summary>
         public const int DefaultWaitFrameCount = 15;
+
         /// <summary>
         /// 显示单位
         /// </summary>
         public IMemberDisplay DisplayMember { get; set; }
+
+        /// <summary>
+        /// 成员管理器
+        /// </summary>
+        public IMemberManager MemberManager { get; set; }
 
         /// <summary>
         /// 位置X
@@ -41,8 +47,7 @@ namespace Assets.script.AI.Member
         /// 移动速度
         /// </summary>
         public int Speed { get; set; }
-
-
+        
         /// <summary>
         /// 生命值
         /// </summary>
@@ -74,11 +79,19 @@ namespace Assets.script.AI.Member
         /// 实例化
         /// </summary>
         /// <param name="nowFrame"></param>
-        public Member(long nowFrame, IMemberDisplay displayMember)
+        public Member(long nowFrame, IMemberDisplay displayMember, IMemberManager memberManager, int id = -1)
         {
             actionFrame = nowFrame;
             DisplayMember = displayMember;
-            Id = idSeed++;
+            MemberManager = memberManager;
+            if (id < 0)
+            {
+                Id = idSeed++;
+            }
+            else
+            {
+                Id = id;
+            }
         }
         // 移动-格子
 
@@ -114,7 +127,7 @@ namespace Assets.script.AI.Member
 
             if (Hp <= 0)
             {
-                MemberManager.Single.Remove(this);
+                MemberManager.Remove(this);
                 UnityEngine.Debug.Log("单位死亡Id:" + Id);
                 return;
             }
@@ -142,8 +155,7 @@ namespace Assets.script.AI.Member
                     targetX = RandomPacker.Single.GetRangeI(0, width);
                     targetY = RandomPacker.Single.GetRangeI(0, height);
 
-                    var path =
-                        AStarPathFinding.SearchRoad(
+                    var path = AStarPathFinding.SearchRoad(
                             BlackBoard.Single.MapBase.GetMapArray(MapManager.MapObstacleLayer),
                             X, Y,
                             targetX, targetY, 1, 1);
@@ -154,10 +166,10 @@ namespace Assets.script.AI.Member
                         pathList = new Stack<Node>(path.ToArray());
                     }
 
-                    var index = RandomPacker.Single.GetRangeI(0, MemberManager.Single.MemberCount);
+                    var index = RandomPacker.Single.GetRangeI(0, MemberManager.MemberCount);
 
                     // 随机攻击一个目标
-                    var targetMember = MemberManager.Single.Get(index);
+                    var targetMember = MemberManager.Get(index);
                     if (targetMember != null)
                     {
                         targetMember.Hp -= 10;
@@ -168,8 +180,17 @@ namespace Assets.script.AI.Member
                 // 向目标寻路, 如果不可达继续寻路
 
                 var nextNode = pathList.Pop();
-                UnityEngine.Debug.Log(Id + " from" + X + "," + Y + " to" + targetX + "," + targetY + "Hp:" + Hp);
                 // 跑出显示命令, 并等待显示部分反馈的帧数
+                SendCmd(new Commend(MemberManager.FrameCount, Id, OptionType.Move)
+                {
+                    Param = new Dictionary<string, string>()
+                    {
+                        { "fromX", "" + X},
+                        { "fromY", "" + Y},
+                        { "toX", "" + nextNode.X},
+                        { "toY", "" + nextNode.X},
+                    }
+                });
 
                 // TODO 发送操作
 
@@ -178,24 +199,19 @@ namespace Assets.script.AI.Member
         }
 
         /// <summary>
+        /// 发送命令
+        /// </summary>
+        /// <param name="cmd"></param>
+        public void SendCmd(IOptionCommand cmd)
+        {
+            MemberManager.SendCmd(cmd);
+        }
+
+        /// <summary>
         /// 执行命令
         /// </summary>
         public void Dispatch(IOptionCommand cmd)
         {
-            if (cmd.OpType == OptionType.Create)
-            {
-                // 创建单位
-                // 单位Id
-                var newId = int.Parse(cmd.Param["id"]);
-                // 初始位置
-                var posX = int.Parse(cmd.Param["posX"]);
-                var posY = int.Parse(cmd.Param["posY"]);
-                // 血量
-                var hp = int.Parse(cmd.Param["hp"]);
-
-
-
-            }
             // 进行操作
 
             switch (cmd.OpType)
@@ -204,12 +220,22 @@ namespace Assets.script.AI.Member
                     // 单位攻击
                 {
                     // 攻击目标
-                    var atkTarId = int.Parse(cmd.Param["tarId"]);
+                    var atkId = int.Parse(cmd.Param["atkId"]);
                     // 攻击方式
                     var atkType = int.Parse(cmd.Param["atkType"]);
                     // 攻击伤害
                     var dmg = int.Parse(cmd.Param["dmg"]);
                     Hp -= dmg;
+
+                    UnityEngine.Debug.Log(" 攻击Id" + atkId + " 被攻击Id:" + Id + " Hp:" + dmg + " 攻击方式:" + atkType);
+                    // 检查是否死亡
+
+                    if (Hp <= 0)
+                    {
+                        MemberManager.Remove(this);
+                        UnityEngine.Debug.Log("单位死亡Id:" + Id);
+                        return;
+                    }
                 }
                     break;
                 case OptionType.Move:
@@ -221,25 +247,19 @@ namespace Assets.script.AI.Member
                     // 移动来源
                     var fromX = int.Parse(cmd.Param["fromX"]);
                     var fromY = int.Parse(cmd.Param["fromY"]);
-                        // 验证来源
+                    // 验证来源
                     if (this.X != fromX || Y != fromY)
                     {
                         UnityEngine.Debug.LogError("数据异常, 刷新位置");
                     }
-                    this.Wait(DisplayMember.Do(new MoveDisplayCommand(toX, toY, this, DisplayMember)));
+                    this.Wait(DisplayMember.Do(new MoveDisplayCommand(fromX, fromY, toX, toY, this, DisplayMember)));
+                    UnityEngine.Debug.Log(Id + " from" + fromX + "," + fromY + " to" + toX + "," + toY + "Hp:" + Hp);
                 }
                     break;
                 case OptionType.None:
                     // 无操作
                 {
                     UnityEngine.Debug.LogError("无操作");
-                }
-                    break;
-                case OptionType.Dead:
-                    // 单位死亡
-                {
-                    // 击杀者
-                    var killerId = int.Parse(cmd.Param["killerId"]);
                 }
                     break;
             }

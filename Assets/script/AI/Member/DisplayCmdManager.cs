@@ -112,4 +112,32 @@ namespace Assets.script.AI.Member
             memberDisplayList.Clear();
         }
     }
+
+    /// <summary>
+    /// 显示管理器接口
+    /// </summary>
+    public interface IDisplayCmdManager
+    {
+        /// <summary>
+        /// 执行
+        /// </summary>
+        void Do();
+
+        /// <summary>
+        /// 添加显示命令
+        /// </summary>
+        /// <param name="memberDisplay"></param>
+        void Add(IDisplayCommand memberDisplay);
+
+        /// <summary>
+        /// 删除显示指令
+        /// </summary>
+        /// <param name="memberDisplay"></param>
+        void Remove(IDisplayCommand memberDisplay);
+
+        /// <summary>
+        /// 清理
+        /// </summary>
+        void Clear();
+    }
 }

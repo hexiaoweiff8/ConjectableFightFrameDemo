@@ -110,75 +110,7 @@ namespace Assets.script.AI.Member
                 Dispatch(packet);
             };
         }
-
-        /// <summary>
-        /// 分发操作
-        /// </summary>
-        /// <param name="packet"></param>
-        public void RouteOption(Commend packet)
-        {
-            if (packet.OpType == OptionType.Create)
-            {
-                // 创建单位
-                // 单位Id
-                var newId = int.Parse(packet.Param["id"]);
-                // 初始位置
-                var posX = int.Parse(packet.Param["posX"]);
-                var posY = int.Parse(packet.Param["posY"]);
-                // 血量
-                var hp = int.Parse(packet.Param["hp"]);
-
-                
-
-            }
-            var targetMember = memberList.Find((member) => member.Id == packet.MemberId);
-            if (targetMember != null)
-            {
-                // 进行操作
-
-                switch (packet.OpType)
-                {
-                    case OptionType.Attack:
-                        // 单位攻击
-                        {
-                            // 攻击目标
-                            var atkTarId = int.Parse(packet.Param["tarId"]);
-                            // 攻击方式
-                            var atkType = int.Parse(packet.Param["atkType"]);
-                            // 攻击伤害
-                            var dmg = int.Parse(packet.Param["dmg"]);
-                        }
-                        break;
-                    case OptionType.Move:
-                        // 单位移动
-                        {
-                            // 移动目标
-                            var toX = int.Parse(packet.Param["toX"]);
-                            var toY = int.Parse(packet.Param["toY"]);
-                            // 移动来源
-                            var fromX = int.Parse(packet.Param["fromX"]);
-                            var fromY = int.Parse(packet.Param["fromY"]);
-                        }
-                        break;
-                    case OptionType.None:
-                        // 无操作
-                        {
-                            Debug.LogError("无操作");
-                        }
-                        break;
-                    case OptionType.Dead:
-                        // 单位死亡
-                        {
-                            // 击杀者
-                            var killerId = int.Parse(packet.Param["killerId"]);
-                        }
-                        break;
-                }
-            }
-        }
         
-
-
         /// <summary>
         /// 执行
         /// </summary>
@@ -216,15 +148,54 @@ namespace Assets.script.AI.Member
         }
 
         /// <summary>
+        /// 发送操作命令
+        /// </summary>
+        /// <param name="cmd"></param>
+        public void SendCmd(IOptionCommand cmd)
+        {
+            // 发送
+            var stream = new MemoryStream();
+            binFormat.Serialize(stream, cmd);
+            NetManager.Single.Send(stream.ToArray());
+        }
+
+        /// <summary>
         /// 抛出消息
         /// </summary>
         public void Dispatch(IOptionCommand cmd)
         {
-            for (var i = 0; i < memberList.Count; i++)
+            if (IsServer)
             {
-                if (cmd.MemberId == memberList[i].Id)
+                // 转发消息
+
+            }
+            // 如果是单位创建则直接创建单位
+            if (cmd.OpType == OptionType.Create)
+            {
+                // 创建单位
+                // 单位Id
+                var newId = cmd.MemberId;
+                // 初始位置
+                var posX = int.Parse(cmd.Param["posX"]);
+                var posY = int.Parse(cmd.Param["posY"]);
+                // 血量
+                var hp = int.Parse(cmd.Param["hp"]);
+                var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
+                var member = new Member(frameCount, memberDisplay, this, newId);
+                member.X = posX;
+                member.Y = posY;
+                member.Hp = hp;
+                MemberManager.Single.Add(member);
+            }
+            else
+            {
+                // 处理单位消息
+                for (var i = 0; i < memberList.Count; i++)
                 {
-                    memberList[i].Dispatch(cmd);
+                    if (cmd.MemberId == memberList[i].Id)
+                    {
+                        memberList[i].Dispatch(cmd);
+                    }
                 }
             }
         }
@@ -237,6 +208,16 @@ namespace Assets.script.AI.Member
         public void Add(IMember member)
         {
             memberList.Add(member);
+            // 发送创建命令
+            member.SendCmd(new Commend(frameCount, member.Id, OptionType.Create)
+            {
+                Param = new Dictionary<string, string>()
+                {
+                    { "posX", "" + member.X},
+                    { "posY", "" + member.Y},
+                    { "hp", "" + member.Hp},
+                },
+            });
         }
 
         /// <summary>
@@ -307,6 +288,11 @@ namespace Assets.script.AI.Member
     public class Commend : IOptionCommand
     {
         /// <summary>
+        /// 帧数
+        /// </summary>
+        public long FrameNum { get; set; }
+
+        /// <summary>
         /// 单位Id
         /// </summary>
         public int MemberId { get; set; }
@@ -325,11 +311,16 @@ namespace Assets.script.AI.Member
         // 死亡标志
         public Dictionary<string, string> Param { get; set; }
 
+        
+
         /// <summary>
         /// 实例化
         /// </summary>
-        public Commend()
+        public Commend(long frameNum, int memberId, OptionType opType)
         {
+            FrameNum = frameNum;
+            MemberId = memberId;
+            OpType = opType;
             Param = new Dictionary<string, string>();
         }
 

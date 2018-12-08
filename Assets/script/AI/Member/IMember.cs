@@ -46,6 +46,12 @@ namespace Assets.script.AI.Member
         void Do(long frame, IBlackBoard blackBoard);
 
         /// <summary>
+        /// 发送命令
+        /// </summary>
+        /// <param name="cmd"></param>
+        void SendCmd(IOptionCommand cmd);
+
+        /// <summary>
         /// 处理操作命令
         /// </summary>
         /// <param name="cmd"></param>
@@ -98,11 +104,26 @@ namespace Assets.script.AI.Member
     /// </summary>
     public interface IMemberManager
     {
+        /// <summary>
+        /// 帧数
+        /// </summary>
+        long FrameCount { get; }
+
+        /// <summary>
+        /// 成员数量
+        /// </summary>
+        int MemberCount { get; }
 
         /// <summary>
         /// 执行
         /// </summary>
         void Do();
+
+        /// <summary>
+        /// 发送命令
+        /// </summary>
+        /// <param name="cmd"></param>
+        void SendCmd(IOptionCommand cmd);
 
         /// <summary>
         /// 处理操作命令
@@ -135,33 +156,6 @@ namespace Assets.script.AI.Member
         void Reset();
     }
 
-    /// <summary>
-    /// 显示管理器接口
-    /// </summary>
-    public interface IDisplayCmdManager
-    {
-        /// <summary>
-        /// 执行
-        /// </summary>
-        void Do();
-
-        /// <summary>
-        /// 添加显示命令
-        /// </summary>
-        /// <param name="memberDisplay"></param>
-        void Add(IDisplayCommand memberDisplay);
-
-        /// <summary>
-        /// 删除显示指令
-        /// </summary>
-        /// <param name="memberDisplay"></param>
-        void Remove(IDisplayCommand memberDisplay);
-
-        /// <summary>
-        /// 清理
-        /// </summary>
-        void Clear();
-    }
 
     /// <summary>
     /// 数据黑板接口
@@ -216,6 +210,7 @@ namespace Assets.script.AI.Member
     public interface IOptionCommand
     {
 
+        long FrameNum { get; set; }
         /// <summary>
         /// 单位Id
         /// </summary>

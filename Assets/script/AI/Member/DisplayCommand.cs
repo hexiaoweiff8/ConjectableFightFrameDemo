@@ -61,18 +61,16 @@ namespace Assets.script.AI.Member
         /// 初始化移动命令
         /// TODO 添加来源位置
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        public MoveDisplayCommand(int x, int y, IMember member, IMemberDisplay memberDisplay)
+        public MoveDisplayCommand(int fromX, int fromY, int toX, int toY, IMember member, IMemberDisplay memberDisplay)
         {
-            this.X = x * BlackBoard.Single.MapBase.UnitWidth;
-            this.Y = y * BlackBoard.Single.MapBase.UnitWidth;
+            this.X = toX * BlackBoard.Single.MapBase.UnitWidth;
+            this.Y = toY * BlackBoard.Single.MapBase.UnitWidth;
             this.Member = member;
             this.MemberDisplay = memberDisplay;
-            FromX = member.X * BlackBoard.Single.MapBase.UnitWidth;
-            FromY = member.Y * BlackBoard.Single.MapBase.UnitWidth;
-            member.X = x;
-            member.Y = y;
+            FromX = fromX * BlackBoard.Single.MapBase.UnitWidth;
+            FromY = fromY * BlackBoard.Single.MapBase.UnitWidth;
+            member.X = toX;
+            member.Y = toY;
             // 设置启动帧数
             StartFrame = MemberManager.Single.FrameCount;
             TotalFrame = CalculateFrameCount();

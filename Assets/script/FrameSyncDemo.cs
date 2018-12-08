@@ -73,7 +73,7 @@ public class FrameSyncDemo : MonoBehaviour
 
         // 初始化单位
         var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
-        var member = new Member(MemberManager.Single.FrameCount, memberDisplay);
+        var member = new Member(MemberManager.Single.FrameCount, memberDisplay, MemberManager.Single);
         member.Hp = 100;
         MemberManager.Single.Add(member);
         //// 初始化单位
