@@ -32,9 +32,14 @@ namespace Assets.script.AI.Net
 
 
         /// <summary>
-        /// 消息处理方法
+        /// 客户端消息处理方法
         /// </summary>
-        public Action<byte[]> ComputeAction;
+        public Action<byte[]> ClientComputeAction;
+
+        /// <summary>
+        /// 服务器消息处理方法
+        /// </summary>
+        public Action<byte[]> ServerComputeAction;
 
         /// <summary>
         /// udp网络连接
@@ -45,6 +50,11 @@ namespace Assets.script.AI.Net
         /// tcp网络连接
         /// </summary>
         private TcpIPClient tcpClient;
+
+        /// <summary>
+        /// udp服务端
+        /// </summary>
+        private UdpServer udpServer;
 
         /// <summary>
         /// 连接
@@ -59,13 +69,30 @@ namespace Assets.script.AI.Net
                 case ClientType.TCP:
                     tcpClient = new TcpIPClient();
                     tcpClient.Connect(ip, port);
-                    tcpClient.Event_Recv += OnReceive;
+                    tcpClient.Event_Recv += OnClientReceive;
                     break;
 
                 case ClientType.UDP:
                     udpClient = new UdpClient();
                     udpClient.Connect(ip, port);
-                    udpClient.Event_Recv += OnReceive;
+                    udpClient.Event_Recv += OnClientReceive;
+                    break;
+            }
+        }
+
+
+        public void StartBind(int port, ClientType type = ClientType.UDP)
+        {
+
+            switch (type)
+            {
+                case ClientType.TCP:
+                    throw new Exception("未完成");
+
+                case ClientType.UDP:
+                    udpServer = new UdpServer();
+                    udpServer.StartBind(port);
+                    udpServer.Event_Recv += OnClientReceive;
                     break;
             }
         }
@@ -75,7 +102,7 @@ namespace Assets.script.AI.Net
         /// </summary>
         /// <param name="bytes">被发送内容</param>
         /// <param name="type">发送类型</param>
-        public void Send(byte[] bytes, ClientType type = ClientType.UDP)
+        public void ClientSend(byte[] bytes, ClientType type = ClientType.UDP)
         {
             switch (type)
             {
@@ -90,15 +117,43 @@ namespace Assets.script.AI.Net
         }
 
         /// <summary>
-        /// 接受消息
+        /// 服务器UDP消息发送
+        /// </summary>
+        /// <param name="ip"></param>
+        /// <param name="port"></param>
+        /// <param name="bytes"></param>
+        public void ServerUdpSend(string ip, int port, byte[] bytes)
+        {
+            udpServer.Send(ip, port, bytes);
+        }
+
+        /// <summary>
+        /// 客户端接受消息
         /// </summary>
         /// <param name="buff"></param>
-        private void OnReceive(byte[] buff)
+        private void OnClientReceive(byte[] buff)
         {
             // 解析数据
-            if (ComputeAction != null)
+            if (ClientComputeAction != null)
             {
-                ComputeAction(buff);
+                ClientComputeAction(buff);
+            }
+            else
+            {
+                Debug.LogError("未初始化处理消息");
+            }
+        }
+
+        /// <summary>
+        /// 服务器消息接收
+        /// </summary>
+        /// <param name="buff"></param>
+        private void OnServerReceive(byte[] buff)
+        {
+            // 解析数据
+            if (ServerComputeAction != null)
+            {
+                ServerComputeAction(buff);
             }
             else
             {
