@@ -34,6 +34,11 @@ public class FrameSyncDemo : MonoBehaviour
     public int ServerPort = 9999;
 
     /// <summary>
+    /// 客户端端口
+    /// </summary>
+    public int ClientPort = 9998;
+
+    /// <summary>
     /// 随机数种子
     /// </summary>
     public int RandomSeed = 1;
@@ -69,6 +74,14 @@ public class FrameSyncDemo : MonoBehaviour
         // 初始化数据黑板
         BlackBoard.Single.MapBase = mapBase;
         MemberManager.Single.Reset();
+        // 初始化服务器
+        if (IsServer)
+        {
+            MemberManager.Single.InitServer(ServerPort);
+        }
+        MemberManager.Single.InitNet(ServerIp, ServerPort, ClientPort);
+
+
 
 
         // 初始化单位

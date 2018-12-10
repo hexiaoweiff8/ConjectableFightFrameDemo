@@ -303,7 +303,7 @@ namespace Assets.script.AI.Net
         /// <summary>
         /// 缓冲大小
         /// </summary>
-        public const int BufferSize = 1024 * 1024;
+        public const int BufferSize = 1024 * 32;
 
         /// <summary>
         /// 缓冲区

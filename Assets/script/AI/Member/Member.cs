@@ -137,7 +137,16 @@ namespace Assets.script.AI.Member
                 // 继续前进
                 var nextNode = pathList.Pop();
                 // 跑出显示命令, 并等待显示部分反馈的帧数
-                this.Wait(DisplayMember.Do(new MoveDisplayCommand(nextNode.X, nextNode.Y, this, DisplayMember)));
+                SendCmd(new Commend(MemberManager.FrameCount, Id, OptionType.Move)
+                {
+                    Param = new Dictionary<string, string>()
+                    {
+                        { "fromX", "" + X},
+                        { "fromY", "" + Y},
+                        { "toX", "" + nextNode.X},
+                        { "toY", "" + nextNode.X},
+                    }
+                });
             }
             else
             {
@@ -172,8 +181,14 @@ namespace Assets.script.AI.Member
                     var targetMember = MemberManager.Get(index);
                     if (targetMember != null)
                     {
-                        targetMember.Hp -= 10;
-                        UnityEngine.Debug.Log(Id + "攻击Id:" + targetMember.Id + " Hp:" + 10);
+                        SendCmd(new Commend(MemberManager.FrameCount, targetMember.Id, OptionType.Attack)
+                        {
+                            Param = new Dictionary<string, string>(){
+                                {"atkId", "" + Id},
+                                {"atkType", "" + 1},
+                                {"dmg", "" + 10},
+                            }
+                        });
                     }
                 }
 
@@ -191,9 +206,6 @@ namespace Assets.script.AI.Member
                         { "toY", "" + nextNode.X},
                     }
                 });
-
-                // TODO 发送操作
-
 
             }
         }

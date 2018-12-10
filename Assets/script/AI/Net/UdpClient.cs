@@ -29,11 +29,6 @@ namespace Assets.script.AI.Net
         private Socket socket;
 
         /// <summary>
-        /// 是否链接成功
-        /// </summary>
-        private bool ConnectSuccess = false;
-
-        /// <summary>
         /// 数据接收类
         /// </summary>
         private RecvObject recvObj = new RecvObject();
@@ -89,9 +84,6 @@ namespace Assets.script.AI.Net
             // 异步请求建立链接
             socket.BeginConnect(address[0], port, (ayResult) =>
             {
-                // 链接成功回调
-                ConnectSuccess = true;
-                //CLog.Log("链接成功");
 
                 // 保存IP与Port
                 connectingAddress = ip;
@@ -149,7 +141,6 @@ namespace Assets.script.AI.Net
         /// </summary>
         public void Close()
         {
-            ConnectSuccess = false;
             if (socket != null && socket.Connected)
             {
                 // 禁用发送与接收

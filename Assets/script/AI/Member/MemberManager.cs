@@ -60,7 +60,6 @@ namespace Assets.script.AI.Member
         /// 当前帧数
         /// </summary>
         private long frameCount = 0;
-        
 
         /// <summary>
         /// member集合
@@ -71,6 +70,11 @@ namespace Assets.script.AI.Member
         /// 检测战斗结果
         /// </summary>
         private Func<List<IMember>, bool> checkFightEnd = null;
+
+        /// <summary>
+        /// 地址端口
+        /// </summary>
+        private Dictionary<string, int> addressAndPort = new Dictionary<string, int>();
 
         /// <summary>
         /// 是否战斗结束
@@ -93,15 +97,48 @@ namespace Assets.script.AI.Member
         }
 
         /// <summary>
+        /// 初始化服务器内容
+        /// </summary>
+        public void InitServer(int serverPort)
+        {
+            // 启动本地监听
+            IsNetMode = true;
+            NetManager.Single.StartBind(serverPort);
+            NetManager.Single.ServerComputeAction = (bytes) =>
+            {
+                // 处理数据
+                // 反序列化
+                var stream = new MemoryStream(bytes);
+                var packet = binFormat.Deserialize(stream) as Commend;
+                // 处理注册消息
+                if (packet.OpType == OptionType.Register)
+                {
+                    // 获取目标的IP, Port
+                    var ip = packet.Param["ip"];
+                    var port = int.Parse(packet.Param["port"]);
+                    // 缓存地址端口
+                    addressAndPort.Add(ip, port);
+                }
+                else
+                {
+                    // 转发消息
+                    SendToAll(packet); 
+                }
+            };
+        }
+
+        /// <summary>
         /// 初始化网络
         /// </summary>
-        /// <param name="ServerIp"></param>
-        /// <param name="ServerPort"></param>
-        public void InitNet(string ServerIp, int ServerPort)
+        /// <param name="serverIp"></param>
+        /// <param name="serverPort"></param>
+        /// <param name="clientPort"></param>
+        public void InitNet(string serverIp, int serverPort, int clientPort)
         {
             IsNetMode = true;
-            NetManager.Single.Connect(ServerIp, ServerPort);
-            NetManager.Single.ComputeAction = (bytes) => { 
+            NetManager.Single.Connect(serverIp, serverPort);
+            NetManager.Single.ClientComputeAction = (bytes) =>
+            {
                 // 处理数据
                 // 反序列化
                 var stream = new MemoryStream(bytes);
@@ -109,6 +146,16 @@ namespace Assets.script.AI.Member
                 // 分发操作
                 Dispatch(packet);
             };
+
+            // 发送注册消息
+            {
+                var regCmd = new Commend(0, 0, OptionType.Register);
+                regCmd.Param.Add("ip", Utils.GetLocalIP());
+                regCmd.Param.Add("port", "" + clientPort);
+                var stream = new MemoryStream();
+                binFormat.Serialize(stream, regCmd);
+                NetManager.Single.ClientSend(stream.ToArray());
+            }
         }
         
         /// <summary>
@@ -156,7 +203,20 @@ namespace Assets.script.AI.Member
             // 发送
             var stream = new MemoryStream();
             binFormat.Serialize(stream, cmd);
-            NetManager.Single.Send(stream.ToArray());
+            NetManager.Single.ClientSend(stream.ToArray());
+        }
+
+        /// <summary>
+        /// 转发给所有单位
+        /// </summary>
+        public void SendToAll(IOptionCommand cmd)
+        {
+            var stream = new MemoryStream();
+            binFormat.Serialize(stream, cmd);
+            var data = stream.ToArray();
+            foreach(var kv in addressAndPort){
+                NetManager.Single.ServerUdpSend(kv.Key, kv.Value, data);
+            }
         }
 
         /// <summary>
@@ -164,11 +224,6 @@ namespace Assets.script.AI.Member
         /// </summary>
         public void Dispatch(IOptionCommand cmd)
         {
-            if (IsServer)
-            {
-                // 转发消息
-
-            }
             // 如果是单位创建则直接创建单位
             if (cmd.OpType == OptionType.Create)
             {
@@ -332,6 +387,7 @@ namespace Assets.script.AI.Member
     public enum OptionType
     {
         None,
+        Register,
         Create,
         Move,
         Attack,

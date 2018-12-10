@@ -7,6 +7,8 @@ using System.Linq.Expressions;
 using System.Text;
 using JetBrains.Annotations;
 using UnityEngine;
+using System.Net;
+using System.Net.Sockets;
 
 /// <summary>
 /// 工具类
@@ -587,7 +589,7 @@ public class Utils
             for (var i = 0; i < h; i++)
             {
                 result[i] = new int[w];
-                for(var j = 0; j < w ;j++)
+                for (var j = 0; j < w; j++)
                 {
                     result[i][j] = val;
                 }
@@ -611,7 +613,7 @@ public class Utils
         if (values != null || values.Length > 0)
         {
             result = values[0];
-            result = values.Concat(new[] {result}).Min();
+            result = values.Concat(new[] { result }).Min();
         }
 
         return result;
@@ -850,5 +852,35 @@ public class Utils
         Debug.DrawLine(firstPoint, beginPoint, color);
 
         //Debug.DrawLine(firstPoint, firstPoint + new Vector3(radius, 0, 0), color);
+    }
+
+
+
+    /// <summary>
+    /// 获取本机IP地址
+    /// </summary>
+    /// <returns>本机IP地址</returns>
+    public static string GetLocalIP()
+    {
+        try
+        {
+            string HostName = Dns.GetHostName(); //得到主机名
+            IPHostEntry IpEntry = Dns.GetHostEntry(HostName);
+            for (int i = 0; i < IpEntry.AddressList.Length; i++)
+            {
+                //从IP地址列表中筛选出IPv4类型的IP地址
+                //AddressFamily.InterNetwork表示此IP为IPv4,
+                //AddressFamily.InterNetworkV6表示此地址为IPv6类型
+                if (IpEntry.AddressList[i].AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return IpEntry.AddressList[i].ToString();
+                }
+            }
+            return "";
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
     }
 }
