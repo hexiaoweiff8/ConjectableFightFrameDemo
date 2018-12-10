@@ -44,7 +44,7 @@ namespace Assets.script.AI.Net
         /// <summary>
         /// udp网络连接
         /// </summary>
-        private UdpClient udpClient;
+        private UdpIPClient _udpIpClient;
 
         /// <summary>
         /// tcp网络连接
@@ -54,7 +54,13 @@ namespace Assets.script.AI.Net
         /// <summary>
         /// udp服务端
         /// </summary>
-        private UdpServer udpServer;
+        private AsyncSocketUDPServer udpServer;
+
+
+        /// <summary>
+        /// tcp服务端
+        /// </summary>
+        private AsyncSocketTCPServer tcpServer;
 
         /// <summary>
         /// 连接
@@ -73,9 +79,9 @@ namespace Assets.script.AI.Net
                     break;
 
                 case ClientType.UDP:
-                    udpClient = new UdpClient();
-                    udpClient.Connect(ip, port);
-                    udpClient.Event_Recv += OnClientReceive;
+                    _udpIpClient = new UdpIPClient();
+                    _udpIpClient.Connect(ip, port);
+                    _udpIpClient.Event_Recv += OnClientReceive;
                     break;
             }
         }
@@ -87,12 +93,14 @@ namespace Assets.script.AI.Net
             switch (type)
             {
                 case ClientType.TCP:
-                    throw new Exception("未完成");
-
+                    tcpServer = new AsyncSocketTCPServer(port);
+                    tcpServer.Start();
+                    tcpServer.DataReceived += OnServerTcpReceive;
+                    break;
                 case ClientType.UDP:
-                    udpServer = new UdpServer();
-                    udpServer.StartBind(port);
-                    udpServer.Event_Recv += OnClientReceive;
+                    udpServer = new AsyncSocketUDPServer(port);
+                    udpServer.Start();
+                    udpServer.DataReceived += OnServerReceive;
                     break;
             }
         }
@@ -104,6 +112,7 @@ namespace Assets.script.AI.Net
         /// <param name="type">发送类型</param>
         public void ClientSend(byte[] bytes, ClientType type = ClientType.UDP)
         {
+            Debug.Log("客户端发送消息:" + bytes.Length);
             switch (type)
             {
                 case ClientType.TCP:
@@ -111,7 +120,7 @@ namespace Assets.script.AI.Net
                     break;
 
                 case ClientType.UDP:
-                    udpClient.Send(bytes);
+                    _udpIpClient.Send(bytes);
                     break;
             }
         }
@@ -124,7 +133,26 @@ namespace Assets.script.AI.Net
         /// <param name="bytes"></param>
         public void ServerUdpSend(string ip, int port, byte[] bytes)
         {
-            udpServer.Send(ip, port, bytes);
+            var address = Dns.GetHostAddresses(ip);
+            udpServer.Send(bytes, new IPEndPoint(address[0], port));
+        }
+
+        /// <summary>
+        /// 发送给所有链接
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="type"></param>
+        public void ServerSendToAll(byte[] bytes, ClientType type = ClientType.UDP)
+        {
+            switch (type)
+            {
+                case ClientType.TCP:
+                    tcpServer.SendToAll(bytes);
+                    break;
+
+                case ClientType.UDP:
+                    break;
+            }
         }
 
         /// <summary>
@@ -147,20 +175,39 @@ namespace Assets.script.AI.Net
         /// <summary>
         /// 服务器消息接收
         /// </summary>
-        /// <param name="buff"></param>
-        private void OnServerReceive(byte[] buff)
+        /// <param name="arg"></param>
+        private void OnServerReceive(object o, AsyncSocketUDPEventArgs arg)
         {
             // 解析数据
             if (ServerComputeAction != null)
             {
-                ServerComputeAction(buff);
+                ServerComputeAction(arg._msg);
             }
             else
             {
                 Debug.LogError("未初始化处理消息");
             }
         }
-        
+
+
+        /// <summary>
+        /// 服务器消息接收
+        /// </summary>
+        /// <param name="arg"></param>
+        private void OnServerTcpReceive(object o, AsyncSocketEventArgs arg)
+        {
+            // 解析数据
+            if (ServerComputeAction != null)
+            {
+                var data = ByteUtils.ReadMsg(ref arg._msg, 0, false);
+                ServerComputeAction(data);
+            }
+            else
+            {
+                Debug.LogError("未初始化处理消息");
+            }
+        }
+
 
     }
 

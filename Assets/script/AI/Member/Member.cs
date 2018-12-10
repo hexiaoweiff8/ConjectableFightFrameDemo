@@ -119,7 +119,8 @@ namespace Assets.script.AI.Member
         /// 执行
         /// </summary>
         /// <param name="frame"></param>
-        public void Do(long frame, IBlackBoard blackBoard)
+        /// <param name="blackBoard"></param>
+        public void OnceFrame(long frame, IBlackBoard blackBoard)
         {
             actionFrame = frame;
 

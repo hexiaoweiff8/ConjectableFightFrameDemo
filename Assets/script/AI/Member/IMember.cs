@@ -43,7 +43,7 @@ namespace Assets.script.AI.Member
         /// <summary>
         /// 执行
         /// </summary>
-        void Do(long frame, IBlackBoard blackBoard);
+        void OnceFrame(long frame, IBlackBoard blackBoard);
 
         /// <summary>
         /// 发送命令
@@ -117,7 +117,7 @@ namespace Assets.script.AI.Member
         /// <summary>
         /// 执行
         /// </summary>
-        void Do();
+        void OnceFrame();
 
         /// <summary>
         /// 发送命令

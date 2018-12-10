@@ -104,6 +104,7 @@ namespace Assets.script.AI.Net
             {
                 return;
             }
+            buf = ByteUtils.AddDataHead(buf);
             socket.BeginSend(buf, 0, buf.Length, SocketFlags.None, SendCallback, socket);
         }
 
@@ -251,9 +252,6 @@ namespace Assets.script.AI.Net
         /// <param name="recvObject">数据接受类</param>
         private void ComputeData(RecvObject recvObject)
         {
-            //CLog.Log("包头读取长度:" + (ByteUtils.GetDataLength(recvObject.Buffer) + 4));
-
-
             if (ByteUtils.CouldRead(recvObject.Buffer, recvObject.ReadPos, recvObject.BufLen - recvObject.ReadPos))
             {
                 while (ByteUtils.CouldRead(recvObject.Buffer, recvObject.ReadPos, recvObject.BufLen - recvObject.ReadPos))
@@ -303,7 +301,7 @@ namespace Assets.script.AI.Net
         /// <summary>
         /// 缓冲大小
         /// </summary>
-        public const int BufferSize = 1024 * 32;
+        public const int BufferSize = 1024 * 1024;
 
         /// <summary>
         /// 缓冲区

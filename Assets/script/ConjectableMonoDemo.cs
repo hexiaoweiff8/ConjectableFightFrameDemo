@@ -86,7 +86,7 @@ public class ConjectableMono : MonoBehaviour
     /// </summary>
 	void Update () {
 		// 驱动逻辑与显示
-        MemberManager.Single.Do();
+        MemberManager.Single.OnceFrame();
         DisplayCmdManager.Single.Do();
         // 绘制地图
         BlackBoard.Single.MapBase.DrawLine();
