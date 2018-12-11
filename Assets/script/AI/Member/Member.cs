@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Debug = UnityEngine.Debug;
 
 namespace Assets.script.AI.Member
 {
@@ -76,6 +77,11 @@ namespace Assets.script.AI.Member
         private Stack<Node> pathList = null;
 
         /// <summary>
+        /// 等待中的操作列表
+        /// </summary>
+        private Dictionary<OptionType, int> waitingOptionDic = new Dictionary<OptionType, int>();
+
+        /// <summary>
         /// 实例化
         /// </summary>
         /// <param name="nowFrame"></param>
@@ -101,6 +107,7 @@ namespace Assets.script.AI.Member
 
         public void Wait(long targetFrame)
         {
+            Debug.Log("等待帧数:" + targetFrame);
             actionFrame = actionFrame + targetFrame;
         }
 
@@ -111,6 +118,11 @@ namespace Assets.script.AI.Member
         /// <returns></returns>
         public bool CheckWait(long frame)
         {
+            // 如果有等待的命令则等待
+            if (waitingOptionDic.Any((kv) => kv.Value > 0))
+            {
+                return true;
+            }
             return frame < actionFrame;
         }
 
@@ -123,13 +135,12 @@ namespace Assets.script.AI.Member
         public void OnceFrame(long frame, IBlackBoard blackBoard)
         {
             actionFrame = frame;
-
+            
             // 检查是否死亡
-
             if (Hp <= 0)
             {
                 MemberManager.Remove(this);
-                UnityEngine.Debug.Log("单位死亡Id:" + Id);
+                Debug.Log("单位死亡Id:" + Id);
                 return;
             }
 
@@ -137,6 +148,7 @@ namespace Assets.script.AI.Member
             {
                 // 继续前进
                 var nextNode = pathList.Pop();
+                Debug.Log("继续前进:" + nextNode.X + "," + nextNode.Y);
                 // 跑出显示命令, 并等待显示部分反馈的帧数
                 SendCmd(new Commend(MemberManager.FrameCount, Id, OptionType.Move)
                 {
@@ -145,7 +157,7 @@ namespace Assets.script.AI.Member
                         { "fromX", "" + X},
                         { "fromY", "" + Y},
                         { "toX", "" + nextNode.X},
-                        { "toY", "" + nextNode.X},
+                        { "toY", "" + nextNode.Y},
                     }
                 });
             }
@@ -164,6 +176,7 @@ namespace Assets.script.AI.Member
                     // 随机获取目标位置
                     targetX = RandomPacker.Single.GetRangeI(0, width);
                     targetY = RandomPacker.Single.GetRangeI(0, height);
+                    
 
                     var path = AStarPathFinding.SearchRoad(
                             BlackBoard.Single.MapBase.GetMapArray(MapManager.MapObstacleLayer),
@@ -194,8 +207,9 @@ namespace Assets.script.AI.Member
                 }
 
                 // 向目标寻路, 如果不可达继续寻路
-
                 var nextNode = pathList.Pop();
+                Debug.Log("重新寻路前进:" + nextNode.X + "," + nextNode.Y);
+
                 // 跑出显示命令, 并等待显示部分反馈的帧数
                 SendCmd(new Commend(MemberManager.FrameCount, Id, OptionType.Move)
                 {
@@ -204,11 +218,11 @@ namespace Assets.script.AI.Member
                         { "fromX", "" + X},
                         { "fromY", "" + Y},
                         { "toX", "" + nextNode.X},
-                        { "toY", "" + nextNode.X},
+                        { "toY", "" + nextNode.Y},
                     }
                 });
-
             }
+
         }
 
         /// <summary>
@@ -217,7 +231,27 @@ namespace Assets.script.AI.Member
         /// <param name="cmd"></param>
         public void SendCmd(IOptionCommand cmd)
         {
-            MemberManager.SendCmd(cmd);
+            if (MemberManager.IsServer)
+            {
+                MemberManager.SendCmd(cmd);
+                if (cmd.OpType == OptionType.Create)
+                {
+                    return;
+                }
+                // 添加到等待列表
+                if (waitingOptionDic.ContainsKey(cmd.OpType))
+                {
+                    waitingOptionDic[cmd.OpType]++;
+                }
+                else
+                {
+                    waitingOptionDic.Add(cmd.OpType, 1);
+                }
+            }
+            else
+            {
+                Dispatch(cmd);
+            }
         }
 
         /// <summary>
@@ -225,8 +259,16 @@ namespace Assets.script.AI.Member
         /// </summary>
         public void Dispatch(IOptionCommand cmd)
         {
+            // 检测等待状态
+            if (waitingOptionDic.ContainsKey(cmd.OpType))
+            {
+                waitingOptionDic[cmd.OpType]--;
+                if (waitingOptionDic[cmd.OpType] < 0)
+                {
+                    waitingOptionDic[cmd.OpType] = 0;
+                }
+            }
             // 进行操作
-
             switch (cmd.OpType)
             {
                 case OptionType.Attack:
@@ -240,13 +282,13 @@ namespace Assets.script.AI.Member
                     var dmg = int.Parse(cmd.Param["dmg"]);
                     Hp -= dmg;
 
-                    UnityEngine.Debug.Log(" 攻击Id" + atkId + " 被攻击Id:" + Id + " Hp:" + dmg + " 攻击方式:" + atkType);
+                    Debug.Log(" 攻击Id" + atkId + " 被攻击Id:" + Id + " Hp:" + dmg + " 攻击方式:" + atkType);
                     // 检查是否死亡
 
                     if (Hp <= 0)
                     {
                         MemberManager.Remove(this);
-                        UnityEngine.Debug.Log("单位死亡Id:" + Id);
+                        Debug.Log("单位死亡Id:" + Id);
                         return;
                     }
                 }
@@ -263,10 +305,11 @@ namespace Assets.script.AI.Member
                     // 验证来源
                     if (this.X != fromX || Y != fromY)
                     {
-                        UnityEngine.Debug.LogError("数据异常, 刷新位置");
+                        Debug.LogError("数据异常, 刷新位置" + X + "," + Y + "-" + fromX + "," + fromY);
                     }
+                    Debug.Log("单位移动:" + toX + "," + toY + " from:" + fromX + "," + fromY + " now:" + X + "," +
+                                          Y);
                     this.Wait(DisplayMember.Do(new MoveDisplayCommand(fromX, fromY, toX, toY, this, DisplayMember)));
-                    UnityEngine.Debug.Log(Id + " from" + fromX + "," + fromY + " to" + toX + "," + toY + "Hp:" + Hp);
                 }
                     break;
                 case OptionType.None:

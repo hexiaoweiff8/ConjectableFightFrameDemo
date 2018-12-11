@@ -59,7 +59,7 @@ namespace Assets.script.AI.Net
             // 数据长度
             //var len = BitConverter.ToUInt32(data, 0);
             var len = BytesToInt32(data, offset);
-            Debug.Log("-" + len + "-" + ((dataLen > 0 ? dataLen : data.Length) - 4));
+            //Debug.Log("-" + len + "-" + ((dataLen > 0 ? dataLen : data.Length) - 4));
             // 数据是否达到长度
             return len > 0 && ((dataLen > 0 ? dataLen :data.Length) - 4) >= len;
         }

@@ -115,6 +115,11 @@ namespace Assets.script.AI.Member
         int MemberCount { get; }
 
         /// <summary>
+        /// 是否为服务端
+        /// </summary>
+        bool IsServer { get; set; }
+
+        /// <summary>
         /// 执行
         /// </summary>
         void OnceFrame();

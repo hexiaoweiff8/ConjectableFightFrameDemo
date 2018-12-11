@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using UnityEngine;
+using Util;
 
 namespace Assets.script.AI.Member
 {
@@ -53,7 +54,9 @@ namespace Assets.script.AI.Member
         /// 如果false则为客户端
         /// 如果true则为服务端
         /// </summary>
-        public bool IsServer = false;
+        public bool IsServer { get; set; }
+
+        
 
 
         /// <summary>
@@ -66,16 +69,40 @@ namespace Assets.script.AI.Member
         /// </summary>
         private bool isFighting = false;
 
+        // -------------------------------------客户端部分----------------------------------------
+
         /// <summary>
         /// member集合
         /// </summary>
         private List<IMember> memberList = new List<IMember>();
 
         /// <summary>
-        /// 操作缓存列表
+        /// 客户端收到的操作缓存列表
         /// </summary>
-        public List<IOptionCommand> optionCommanList = new List<IOptionCommand>(); 
-        
+        private List<IOptionCommand> optionCommandList = new List<IOptionCommand>();
+
+        /// <summary>
+        /// 客户端缓存命令列表
+        /// </summary>
+        private FramePacker clientStageFramePacker = new FramePacker();
+
+
+        // ------------------------------------服务器部分------------------------------------------
+
+        private const float ServerFrameTime = 0.1f;
+
+        /// <summary>
+        /// 服务器缓存命令列表
+        /// </summary>
+        private FramePacker serverStageFramePacker = new FramePacker();
+
+        /// <summary>
+        /// 服务器定时器
+        /// </summary>
+        private Timer serverTimer = new Timer(ServerFrameTime, true);
+
+
+        // -------------------------------------通用部分--------------------------------------------
 
         /// <summary>
         /// 反序列化
@@ -87,6 +114,8 @@ namespace Assets.script.AI.Member
         /// </summary>
         private Func<List<IMember>, bool> checkFightEnd = null;
 
+
+        // -------------------------------------公共方法------------------------------------------
 
         /// <summary>
         /// 设置检测战斗结束
@@ -102,24 +131,29 @@ namespace Assets.script.AI.Member
         /// </summary>
         public void InitServer(int serverPort)
         {
+            serverTimer.Kill();
             // 启动本地监听
             IsNetMode = true;
             NetManager.Single.StartBind(serverPort, ClientType.TCP);
             NetManager.Single.ServerComputeAction = (bytes) =>
             {
-                Debug.Log("收到消息" + bytes.Length);
+                //Debug.Log("收到消息" + bytes.Length);
                 // 处理数据
                 // 反序列化
                 var stream = new MemoryStream(bytes);
-                var packet = binFormat.Deserialize(stream) as Commend;
-
-                Debug.Log("操作类型" + packet.OpType);
-                // 处理注册消息
-                {
-                    // 转发消息
-                    SendToAll(packet); 
-                }
+                var packet = binFormat.Deserialize(stream) as FramePacker;
+                // 缓存各个单位的操作
+                serverStageFramePacker.CommandList.AddRange(packet.CommandList);
             };
+
+            // 启动服务器定时器
+            serverTimer = new Timer(ServerFrameTime, true).OnCompleteCallback(() =>
+            {
+                //Debug.Log("tick!");
+                // 定时向所有客户端发送操作
+                SendToAll(serverStageFramePacker);
+                serverStageFramePacker.CommandList.Clear();
+            }).Start();
         }
 
         /// <summary>
@@ -137,22 +171,30 @@ namespace Assets.script.AI.Member
                 // 处理数据
                 // 反序列化
                 var stream = new MemoryStream(bytes);
-                var packet = binFormat.Deserialize(stream) as Commend;
-                // 分发操作
-                Dispatch(packet);
+                var packet = binFormat.Deserialize(stream) as FramePacker;
+                // 解析后循环发送
+                foreach (var cmd in packet.CommandList)
+                {
+                    // 分发操作
+                    Dispatch(cmd);
+                }
+
+                // 发送缓存操作
+                stream = new MemoryStream();
+                binFormat.Serialize(stream, clientStageFramePacker);
+                //Debug.Log("发送消息" + stream.ToArray().Length);
+                NetManager.Single.ClientSend(stream.ToArray(), ClientType.TCP);
+                clientStageFramePacker.CommandList.Clear();
             };
             
         }
 
-        private long frame = 0;
-        
         /// <summary>
         /// 执行
         /// </summary>
         public void OnceFrame()
         {
-            frame ++;
-            if (isFighting && frame % 100 == 0)
+            if (isFighting)
             {
                 var targetFrame = (ShowMode ? FrameSpeed : FastFrameSpeed) + frameCount;
                 while (targetFrame > frameCount)
@@ -181,12 +223,14 @@ namespace Assets.script.AI.Member
                     }
                 }
             }
+            // -------------------客户端操作---------------------
             // 执行缓存内容
-            for (var i = 0; i < optionCommanList.Count; i++)
+            for (var i = 0; i < optionCommandList.Count; i++)
             {
-                DoCmd(optionCommanList[i]);
+                DoCmd(optionCommandList[i]);
             }
-            optionCommanList.Clear();
+            optionCommandList.Clear();
+
         }
 
         /// <summary>
@@ -195,22 +239,19 @@ namespace Assets.script.AI.Member
         /// <param name="cmd"></param>
         public void SendCmd(IOptionCommand cmd)
         {
-            // 发送
-            var stream = new MemoryStream();
-            binFormat.Serialize(stream, cmd);
-            //UnityEngine.Debug.Log("发送消息" + stream.ToArray().Length);
-            NetManager.Single.ClientSend(stream.ToArray(), ClientType.TCP);
+            // 缓存命令, 等待逻辑帧发送
+            // 如果收到服务器的逻辑计数帧, 则立即发送
+            clientStageFramePacker.CommandList.Add(cmd);
         }
 
         /// <summary>
         /// 转发给所有单位
         /// </summary>
-        public void SendToAll(IOptionCommand cmd)
+        public void SendToAll(FramePacker frameData)
         {
             var stream = new MemoryStream();
-            binFormat.Serialize(stream, cmd);
-            var data = stream.ToArray();
-            NetManager.Single.ServerSendToAll(data, ClientType.TCP);
+            binFormat.Serialize(stream, frameData);
+            NetManager.Single.ServerSendToAll(stream.ToArray(), ClientType.TCP);
         }
 
         /// <summary>
@@ -218,10 +259,10 @@ namespace Assets.script.AI.Member
         /// </summary>
         public void Dispatch(IOptionCommand cmd)
         {
-            Debug.Log("消息处理" + cmd.OpType);
+            //Debug.Log("消息处理" + cmd.OpType);
 
             // 将创建事件抛入待处理列表, 解决多线程创建单位问题
-            optionCommanList.Add(cmd);
+            optionCommandList.Add(cmd);
         }
 
         /// <summary>
@@ -365,6 +406,7 @@ namespace Assets.script.AI.Member
         // 攻击
         // 死亡
         public OptionType OpType { get; set; }
+        
 
         // 操作数据
         // 出生位置, 血量
@@ -386,6 +428,24 @@ namespace Assets.script.AI.Member
             Param = new Dictionary<string, string>();
         }
 
+    }
+
+    /// <summary>
+    /// 逻辑帧数据包装
+    /// </summary>
+    [Serializable]
+    public class FramePacker
+    {
+        public List<IOptionCommand> CommandList = new List<IOptionCommand>();
+    }
+
+    /// <summary>
+    /// 消息类型
+    /// </summary>
+    public enum MsgType
+    {
+        ServerFrame,    // 服务器帧
+        ClientOption,   // 客户端操作
     }
 
     /// <summary>

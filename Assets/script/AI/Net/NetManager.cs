@@ -112,7 +112,7 @@ namespace Assets.script.AI.Net
         /// <param name="type">发送类型</param>
         public void ClientSend(byte[] bytes, ClientType type = ClientType.UDP)
         {
-            Debug.Log("客户端发送消息:" + bytes.Length);
+            //Debug.Log("客户端发送消息:" + bytes.Length);
             switch (type)
             {
                 case ClientType.TCP:
