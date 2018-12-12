@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.script.AI.Member;
 using UnityEngine;
 using Assets.script.AI.Net;
+using Util;
 
 public class FrameSyncDemo : MonoBehaviour
 {
@@ -81,19 +82,12 @@ public class FrameSyncDemo : MonoBehaviour
         }
         MemberManager.Single.InitNet(ServerIp, ServerPort, ClientPort);
 
-
-
-
         // 初始化单位
-        var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
+        var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Sphere));
         var member = new Member(MemberManager.Single.FrameCount, memberDisplay, MemberManager.Single);
         member.Hp = 100;
+        member.Speed = 1;
         MemberManager.Single.Add(member);
-        //// 初始化单位
-        //memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
-        //member = new Member(MemberManager.Single.FrameCount, memberDisplay);
-        //member.Hp = 100;
-        //MemberManager.Single.Add(member);
 
         // 设置战斗结束检测
         MemberManager.Single.SetCheckFightEndFunc((memberList) =>
@@ -108,11 +102,6 @@ public class FrameSyncDemo : MonoBehaviour
             return true;
         });
 
-        if (IsServer)
-        {
-            // 建立服务器
-        }
-
     }
     
     void Update()
@@ -122,9 +111,5 @@ public class FrameSyncDemo : MonoBehaviour
         DisplayCmdManager.Single.Do();
         // 绘制地图
         BlackBoard.Single.MapBase.DrawLine();
-        // TODO 操作注册单位
-
-        // 单位的操作, 发送消息
-
     }
 }
