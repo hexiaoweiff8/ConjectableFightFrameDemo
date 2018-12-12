@@ -56,7 +56,12 @@ namespace Assets.script.AI.Member
         /// </summary>
         public bool IsServer { get; set; }
 
-        
+        /// <summary>
+        /// 是否为是战斗状态
+        /// </summary>
+        public bool IsFighting { get { return isFighting; } }
+
+
 
 
         /// <summary>
@@ -89,7 +94,7 @@ namespace Assets.script.AI.Member
 
         // ------------------------------------服务器部分------------------------------------------
 
-        private const float ServerFrameTime = 0.1f;
+        private const float ServerFrameTime = 0.02f;
 
         /// <summary>
         /// 服务器缓存命令列表
@@ -161,8 +166,7 @@ namespace Assets.script.AI.Member
         /// </summary>
         /// <param name="serverIp"></param>
         /// <param name="serverPort"></param>
-        /// <param name="clientPort"></param>
-        public void InitNet(string serverIp, int serverPort, int clientPort)
+        public void InitNet(string serverIp, int serverPort)
         {
             IsNetMode = true;
             NetManager.Single.Connect(serverIp, serverPort, ClientType.TCP);
@@ -271,34 +275,69 @@ namespace Assets.script.AI.Member
         /// <param name="cmd"></param>
         public void DoCmd(IOptionCommand cmd)
         {
-
-            // 如果是单位创建则直接创建单位
-            if (cmd.OpType == OptionType.Create)
+            switch (cmd.OpType)
             {
-                // 创建单位
-                // 单位Id
-                var newId = cmd.MemberId;
-                // 初始位置
-                var posX = int.Parse(cmd.Param["posX"]);
-                var posY = int.Parse(cmd.Param["posY"]);
-                // 血量
-                var hp = int.Parse(cmd.Param["hp"]);
-                var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
-                var member = new Member(frameCount, memberDisplay, this, newId);
-                member.X = posX;
-                member.Y = posY;
-                member.Hp = hp;
-                MemberManager.Single.Add(member);
-            }
-            else
-            {
-                // 处理单位消息
-                for (var i = 0; i < memberList.Count; i++)
+                case OptionType.Create:
                 {
-                    if (cmd.MemberId == memberList[i].Id)
+                    // 如果是单位创建则直接创建单位
+                    // 创建单位
+                    // 单位Id
+                    var newId = cmd.MemberId;
+                    // 判断如果是自己的单位跳过
+                    if (memberList.Any((item) => item.Id == newId))
                     {
-                        memberList[i].Dispatch(cmd);
+                        return;
                     }
+                    // 初始位置
+                    var posX = int.Parse(cmd.Param["posX"]);
+                    var posY = int.Parse(cmd.Param["posY"]);
+                    // 血量
+                    var hp = int.Parse(cmd.Param["hp"]);
+                    var memberDisplay = new MemberDisplay(GameObject.CreatePrimitive(PrimitiveType.Capsule));
+                    var member = new Member(frameCount, memberDisplay, this, newId);
+                    member.X = posX;
+                    member.Y = posY;
+                    member.Hp = hp;
+                    Add(member);
+                }
+                    break;
+                case OptionType.EnterServer:
+                {
+                    // 单位加入服务器
+                    if (IsServer)
+                    {
+                        Debug.Log("单位加入服务器" + cmd.Param["ip"]);
+                            // 单位IP
+                            // 单位
+                    }
+                }
+                    break;
+                case OptionType.ServerStart:
+                    {
+                        // 服务器发送的开始命令
+                        isFighting = true;
+                    }
+                    break;
+                default:
+                {
+
+                    // 处理单位消息
+                    for (var i = 0; i < memberList.Count; i++)
+                    {
+                        if (cmd.MemberId == memberList[i].Id)
+                        {
+                            memberList[i].Dispatch(cmd);
+                        }
+                    }
+                    }
+                    break;
+            }
+
+            for (var i = 0; i < memberList.Count; i++)
+            {
+                if (((Member)memberList[i]).waitingOptionDic.Any((kv) => kv.Value > 0))
+                {
+                    Debug.LogError("" + memberList[i].Id + "消息未回传");
                 }
             }
         }
@@ -358,7 +397,8 @@ namespace Assets.script.AI.Member
         {
             frameCount = 0;
             memberList.Clear();
-            isFighting = true;
+            isFighting = false;
+            NetManager.Single.Reset();
         }
 
         // 消息处理
@@ -440,25 +480,18 @@ namespace Assets.script.AI.Member
     }
 
     /// <summary>
-    /// 消息类型
-    /// </summary>
-    public enum MsgType
-    {
-        ServerFrame,    // 服务器帧
-        ClientOption,   // 客户端操作
-    }
-
-    /// <summary>
     /// 操作类型
     /// </summary>
     public enum OptionType
     {
-        None,
-        Create,
-        Move,
-        Attack,
-        Dead,
-        FightEnd,
+        None,           // 无操作
+        Create,         // 创建单位
+        Move,           // 单位移动
+        Attack,         // 单位攻击
+        Dead,           // 单位死亡
+        FightEnd,       // 战斗结束
+        EnterServer,    // 加入服务器
+        ServerStart,    // 服务器启动
     }
 
 }

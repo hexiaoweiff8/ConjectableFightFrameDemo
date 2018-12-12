@@ -549,7 +549,7 @@ public class ClusterManager : ILoopItem
     /// <param name="argQuadTree"></param>
     private void DrawQuadTreeLine<T>(QuadTree<T> argQuadTree) where T : IGraphicsHolder
     {
-        if (!Debug.logger.logEnabled)
+        if (!Debug.unityLogger.logEnabled)
         {
             return;
         }

@@ -53,9 +53,15 @@ namespace Assets.script.AI.Member
         /// 生命值
         /// </summary>
         public int Hp { get; set; }
+        
 
         /// <summary>
-        /// 是否为AI
+        /// 是否为本地控制单位
+        /// </summary>
+        public bool IsLocal { get; set; }
+
+        /// <summary>
+        /// 单位是否为AI
         /// </summary>
         public bool IsAI { get; set; }
 
@@ -79,7 +85,7 @@ namespace Assets.script.AI.Member
         /// <summary>
         /// 等待中的操作列表
         /// </summary>
-        private Dictionary<OptionType, int> waitingOptionDic = new Dictionary<OptionType, int>();
+        public Dictionary<OptionType, int> waitingOptionDic = new Dictionary<OptionType, int>();
 
         /// <summary>
         /// 实例化
@@ -143,86 +149,102 @@ namespace Assets.script.AI.Member
                 Debug.Log("单位死亡Id:" + Id);
                 return;
             }
-
-            if (pathList != null && pathList.Count > 0)
+            if (IsLocal && IsAI)
             {
-                // 继续前进
-                var nextNode = pathList.Pop();
-                Debug.Log("继续前进:" + nextNode.X + "," + nextNode.Y);
-                // 跑出显示命令, 并等待显示部分反馈的帧数
-                SendCmd(new Commend(MemberManager.FrameCount, Id, OptionType.Move)
+                if (pathList != null && pathList.Count > 0)
                 {
-                    Param = new Dictionary<string, string>()
+                    // 继续前进
+                    var nextNode = pathList.Pop();
+                    Debug.Log("继续前进:" + nextNode.X + "," + nextNode.Y);
+                    // 跑出显示命令, 并等待显示部分反馈的帧数
+                    SendCmd(new Commend(MemberManager.FrameCount, Id, OptionType.Move)
                     {
-                        { "fromX", "" + X},
-                        { "fromY", "" + Y},
-                        { "toX", "" + nextNode.X},
-                        { "toY", "" + nextNode.Y},
-                    }
-                });
-            }
-            else
-            {
-
-                var width = blackBoard.MapBase.MapWidth;
-                var height = blackBoard.MapBase.MapHeight;
-
-                var couldNotPass = true;
-                int targetX = 0;
-                int targetY = 0;
-
-                while (couldNotPass)
+                        Param = new Dictionary<string, string>()
+                        {
+                            {"fromX", "" + X},
+                            {"fromY", "" + Y},
+                            {"toX", "" + nextNode.X},
+                            {"toY", "" + nextNode.Y},
+                        }
+                    });
+                }
+                else
                 {
-                    // 随机获取目标位置
-                    targetX = RandomPacker.Single.GetRangeI(0, width);
-                    targetY = RandomPacker.Single.GetRangeI(0, height);
-                    
 
-                    var path = AStarPathFinding.SearchRoad(
+                    var width = blackBoard.MapBase.MapWidth;
+                    var height = blackBoard.MapBase.MapHeight;
+
+                    var couldNotPass = true;
+                    int targetX = 0;
+                    int targetY = 0;
+
+                    while (couldNotPass)
+                    {
+                        // 随机获取目标位置
+                        targetX = RandomPacker.Single.GetRangeI(0, width);
+                        targetY = RandomPacker.Single.GetRangeI(0, height);
+
+
+                        var path = AStarPathFinding.SearchRoad(
                             BlackBoard.Single.MapBase.GetMapArray(MapManager.MapObstacleLayer),
                             X, Y,
                             targetX, targetY, 1, 1);
 
-                    if (path != null && path.Count > 0)
-                    {
-                        couldNotPass = false;
-                        pathList = new Stack<Node>(path.ToArray());
-                    }
-
-                    var index = RandomPacker.Single.GetRangeI(0, MemberManager.MemberCount);
-
-                    // 随机攻击一个目标
-                    var targetMember = MemberManager.Get(index);
-                    if (targetMember != null)
-                    {
-                        SendCmd(new Commend(MemberManager.FrameCount, targetMember.Id, OptionType.Attack)
+                        if (path != null && path.Count > 0)
                         {
-                            Param = new Dictionary<string, string>(){
-                                {"atkId", "" + Id},
-                                {"atkType", "" + 1},
-                                {"dmg", "" + 10},
-                            }
-                        });
+                            couldNotPass = false;
+                            pathList = new Stack<Node>(path.ToArray());
+                        }
+
+                        var index = RandomPacker.Single.GetRangeI(0, MemberManager.MemberCount);
+
+                        // 随机攻击一个目标
+                        var targetMember = MemberManager.Get(index);
+                        if (targetMember != null)
+                        {
+                            SendCmd(new Commend(MemberManager.FrameCount, targetMember.Id, OptionType.Attack)
+                            {
+                                Param = new Dictionary<string, string>()
+                                {
+                                    {"atkId", "" + Id},
+                                    {"atkType", "" + 1},
+                                    {"dmg", "" + 10},
+                                }
+                            });
+                        }
                     }
-                }
 
-                // 向目标寻路, 如果不可达继续寻路
-                var nextNode = pathList.Pop();
-                Debug.Log("重新寻路前进:" + nextNode.X + "," + nextNode.Y);
+                    // 向目标寻路, 如果不可达继续寻路
+                    var nextNode = pathList.Pop();
+                    Debug.Log("重新寻路前进:" + nextNode.X + "," + nextNode.Y);
 
-                // 跑出显示命令, 并等待显示部分反馈的帧数
-                SendCmd(new Commend(MemberManager.FrameCount, Id, OptionType.Move)
-                {
-                    Param = new Dictionary<string, string>()
+                    // 跑出显示命令, 并等待显示部分反馈的帧数
+                    SendCmd(new Commend(MemberManager.FrameCount, Id, OptionType.Move)
                     {
-                        { "fromX", "" + X},
-                        { "fromY", "" + Y},
-                        { "toX", "" + nextNode.X},
-                        { "toY", "" + nextNode.Y},
-                    }
-                });
+                        Param = new Dictionary<string, string>()
+                        {
+                            {"fromX", "" + X},
+                            {"fromY", "" + Y},
+                            {"toX", "" + nextNode.X},
+                            {"toY", "" + nextNode.Y},
+                        }
+                    });
+                }
             }
+        }
 
+        /// <summary>
+        /// 移动到目标位置
+        /// </summary>
+        /// <param name="fromX"></param>
+        /// <param name="fromY"></param>
+        /// <param name="toX"></param>
+        /// <param name="toY"></param>
+        public void Move(int fromX, int fromY, int toX, int toY)
+        {
+            Debug.Log(Id + "单位移动:" + toX + "," + toY + " from:" + fromX + "," + fromY + " now:" + X + "," +
+                                          Y);
+            this.Wait(DisplayMember.Do(new MoveDisplayCommand(fromX, fromY, toX, toY, this, DisplayMember)));
         }
 
         /// <summary>
@@ -231,26 +253,25 @@ namespace Assets.script.AI.Member
         /// <param name="cmd"></param>
         public void SendCmd(IOptionCommand cmd)
         {
-            if (MemberManager.IsServer)
+
+            // 如果有等待的命令则等待
+            if (waitingOptionDic.Any((kv) => kv.Value > 0))
             {
-                MemberManager.SendCmd(cmd);
-                if (cmd.OpType == OptionType.Create)
-                {
-                    return;
-                }
-                // 添加到等待列表
-                if (waitingOptionDic.ContainsKey(cmd.OpType))
-                {
-                    waitingOptionDic[cmd.OpType]++;
-                }
-                else
-                {
-                    waitingOptionDic.Add(cmd.OpType, 1);
-                }
+                return;
+            }
+            MemberManager.SendCmd(cmd);
+            if (cmd.OpType == OptionType.Create)
+            {
+                return;
+            }
+            // 添加到等待列表
+            if (waitingOptionDic.ContainsKey(cmd.OpType))
+            {
+                waitingOptionDic[cmd.OpType]++;
             }
             else
             {
-                Dispatch(cmd);
+                waitingOptionDic.Add(cmd.OpType, 1);
             }
         }
 
@@ -305,17 +326,15 @@ namespace Assets.script.AI.Member
                     // 验证来源
                     if (this.X != fromX || Y != fromY)
                     {
-                        Debug.LogError("数据异常, 刷新位置" + X + "," + Y + "-" + fromX + "," + fromY);
+                        Debug.LogError(Id + "数据异常, 刷新位置" + X + "," + Y + "-" + fromX + "," + fromY);
                     }
-                    Debug.Log("单位移动:" + toX + "," + toY + " from:" + fromX + "," + fromY + " now:" + X + "," +
-                                          Y);
-                    this.Wait(DisplayMember.Do(new MoveDisplayCommand(fromX, fromY, toX, toY, this, DisplayMember)));
+                    Move(fromX, fromY, toX, toY);
                 }
                     break;
                 case OptionType.None:
                     // 无操作
                 {
-                    UnityEngine.Debug.LogError("无操作");
+                    Debug.LogError("无操作");
                 }
                     break;
             }

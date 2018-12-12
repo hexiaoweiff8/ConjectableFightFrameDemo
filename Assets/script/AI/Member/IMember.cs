@@ -41,6 +41,25 @@ namespace Assets.script.AI.Member
         int Hp { get; set; }
 
         /// <summary>
+        /// 是否本地控制单位
+        /// </summary>
+        bool IsLocal { get; set; }
+
+        /// <summary>
+        /// 单位是否为AI
+        /// </summary>
+        bool IsAI { get; set; }
+
+        /// <summary>
+        /// 单位移动
+        /// </summary>
+        /// <param name="fromX"></param>
+        /// <param name="fromY"></param>
+        /// <param name="toX"></param>
+        /// <param name="toY"></param>
+        void Move(int fromX, int fromY, int toX, int toY);
+
+        /// <summary>
         /// 执行
         /// </summary>
         void OnceFrame(long frame, IBlackBoard blackBoard);
@@ -118,6 +137,11 @@ namespace Assets.script.AI.Member
         /// 是否为服务端
         /// </summary>
         bool IsServer { get; set; }
+
+        /// <summary>
+        /// 是否正在战斗
+        /// </summary>
+        bool IsFighting { get; }
 
         /// <summary>
         /// 执行

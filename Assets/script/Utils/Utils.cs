@@ -729,7 +729,7 @@ public class Utils
     /// <param name="graphics">图形对象</param>
     public static void DrawGraphics(ICollisionGraphics graphics, Color color)
     {
-        if (!Debug.logger.logEnabled)
+        if (!Debug.unityLogger.logEnabled)
         {
             return;
         }

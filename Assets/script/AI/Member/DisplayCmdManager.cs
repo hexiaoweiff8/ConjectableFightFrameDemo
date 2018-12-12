@@ -53,6 +53,10 @@ namespace Assets.script.AI.Member
                                 var targetY = moveCmd.Y;
                                 var startX = moveCmd.FromX;
                                 var startY = moveCmd.FromY;
+                                if (targetX == startX && targetY == startY)
+                                {
+                                    break;
+                                }
                                 var startFrame = moveCmd.StartFrame;
                                 var nowFrame = MemberManager.Single.FrameCount;
                                 var totalFrame = moveCmd.TotalFrame;

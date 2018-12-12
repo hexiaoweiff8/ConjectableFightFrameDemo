@@ -155,6 +155,32 @@ namespace Assets.script.AI.Net
             }
         }
 
+
+
+        public void Reset()
+        {
+            // 关闭连接
+            if (tcpServer != null)
+            {
+                tcpServer.CloseAllClient();
+                tcpServer.Dispose();
+            }
+            if (udpServer != null)
+            {
+                udpServer.CloseAllClient();
+                udpServer.Dispose();
+            }
+
+            if (tcpClient != null)
+            {
+                tcpClient.Dispose();
+            }
+            if (_udpIpClient != null)
+            {
+                _udpIpClient.Dispose();
+            }
+        }
+
         /// <summary>
         /// 客户端接受消息
         /// </summary>
